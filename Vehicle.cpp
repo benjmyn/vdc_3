@@ -19,9 +19,10 @@ Vehicle::Vehicle() {
     cxe = {0, 0, 0, 0};
     cze = {0, 0, 0, 0};
     h = 0.300;
-    l = a + b;
     tf = 1.194;
     tr = 1.194;
+    zf = 0.089;
+    zr = 0.089;
     Re = 0.200;
     camf = 0;
     camr = 0;
@@ -31,7 +32,10 @@ Vehicle::Vehicle() {
     toer = 0.4;
     ack = 0.1;
     fpb = 0.75;
+
+
     // Calculated Values
+    l = a + b;
     pos_whl.set_size(4);
     pos_whl(0) = { a,  tf/2};
     pos_whl(1) = { a, -tf/2};
@@ -42,6 +46,28 @@ Vehicle::Vehicle() {
     p94xs = {0.53};
     p94y = {1.250, -0.14, 2.65, 2500.0, 611.0, 0.05, 1.03, -2.39, 0.0, 0.0, 0.100, 0.0, 0.0, 0.0, -22, 0.003, 0.030, 0.0};
     p94ys = {0.53, 1.10};
+
+    // Heave & roll stiffnesses
+    mraf = 1.0;
+    mrar = 1.0;
+    mrsf = 1.0;
+    mrsr = 1.0;
+    kaf = 7000;
+    kar = 7000;
+    ksf = 35000;
+    ksr = 35000;
+    kpf = 125000;
+    kpr = 125000;
+    krsf = (pow(mrsf, -2) * ksf + pow(mraf, -2) * kaf) * pow(tf, 2) / 2;
+    krsr = (pow(mrsr, -2) * ksr + pow(mrar, -2) * kar) * pow(tr, 2) / 2;
+    krpf = kpf * pow(tf, 2) / 2;
+    krpr = kpr * pow(tr, 2) / 2;
+    khf = (pow(mrsf, -2) * ksf * kpf) / (pow(mrsf, -2) * ksf + kpf);
+    khr = (pow(mrsr, -2) * ksr * kpr) / (pow(mrsr, -2) * ksr + kpr);
+    kh = khf + khr;
+    krf = (krsf * krpf) / (krsf + krpf);
+    krr = (krsr * krpr) / (krsr + krpr);
+    kr = krf + krr;
     cout << "Initialized Vehicle" << endl;
 }
 void Vehicle::LoadCalculatedAttributes() {
@@ -348,7 +374,18 @@ vec Vehicle::LongLoadTransfer(const vec &fx) {
 }
 vec Vehicle::LatLoadTransfer(const vec &fy, const double &pitch, const double &heave) {
     // LLTD equations
-    return vec({0, 0, 0, 0});
+    const double qf = zf; // const for now
+    const double qr = zr; // const for now
+    const double q = fwt * qr + (1 - fwt) * qf;
+    double yf = fy(0) + fy(1);
+    double yr = fy(2) + fy(3);
+    vec xi = {(krf / kr) * (h - q) + qf + (-qf / krpf) * (krf * krr / kr),
+                    (krf / kr) * (h - q) + 0 + (qr / krpr) * (krf * krr / kr),
+                    (krr / kr) * (h - q) + 0 +(qf / krpf) * (krf * krr / kr),
+                    (krr / kr) * (h - q) + qr + (-qr / krpr) * (krf * krr / kr)};
+    double dzf = (xi(0) * yf + xi(1) * yr) / tf;
+    double dzr = (xi(2) * yf + xi(3) * yr) / tr;
+    return vec({dzf, -dzf, dzr, -dzr});
 }
 vec Vehicle::TotalLoad(const vec &fx, const vec &fy, const double &fza, const double &mya, const double &pitch, const double &heave) {
     return StaticLoad() + AeroLoad(fza, mya) + LongLoadTransfer(fx) + LatLoadTransfer(fy, pitch, heave);

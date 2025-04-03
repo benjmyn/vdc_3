@@ -19,6 +19,12 @@ using namespace arma;
 
 int main() {
     Vehicle Car;
+    //vec fx = {0, 0, 100, 100};
+    //vec fy = {100, 100, 100, 100};
+    //cout << "Static:\n" << Car.StaticLoad() << endl;
+    //cout << "LLT:\n" << Car.LongLoadTransfer(fx) << endl;
+    //cout << "LLTD:\n" << Car.LatLoadTransfer(fy, 0, 0) << endl;
+    //cout << "Aero:\n" << Car.AeroLoad(-100, 0) << endl;
     //cout << Car.TireFy(vec({0, 0, 0, 0}),
     //                    vec({0.39, 1.28, -8.33, -8.10}),
     //                    vec({-652, -652, -745, -745}),

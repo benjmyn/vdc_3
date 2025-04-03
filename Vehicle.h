@@ -46,8 +46,8 @@ public:
     double a, b; // Front and rear axle to CG lengths [m]
     double krsf, krsr; // Sprung & ARB roll rates
     double krpf, krpr; // Pneumatic roll rates
-    double khf, khr; // Total heave rates
-    double krf, krr; // Total roll rates
+    double khf, khr, kh; // Total heave rates
+    double krf, krr, kr; // Total roll rates
     field<vec> pos_whl; // Wheel position vectors
 
     Vehicle();
