@@ -333,17 +333,17 @@ vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc) {
             fxt(i) = fxT(i);
         }
         else {
-            // If demanded greater, use potential *** may be reduced for wheelspin
-            fxt(i) = 1.0 * fxp(i) * sign(Tw(i));
+            // If demanded greater, use potential *** reduced for wheelspin
+            fxt(i) = 0.7 * fxp(i) * sign(Tw(i));
         }
     }
-    fxt += 0.00 * fz; // Rolling resistance (fz is negative)
+    //fxt += 0.00 * fz; // Rolling resistance (fz is negative)
     return fxt;
 }
 vec Vehicle::TireFy(const vec &fxt, const vec &slip, const vec &fz, const vec &inc) {
     vec fxp = PacejkaFx(fz, inc);
     vec fyp = PacejkaFy(slip, fz, inc); // Based on pacejka equation
-    vec fyt = fyp % sqrt(1 - square(fxt / fxp)); // Based on traction ellipse (conservative approximation)
+    vec fyt = fyp % sqrt(1 - square(fxt / (1.00*fxp))); // Based on traction ellipse (conservative approximation)
     return fyt;
 }
 vec Vehicle::TireMz(const vec &slip, const vec &fz, const vec &inc, const vec &fyt) {
