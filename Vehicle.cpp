@@ -219,7 +219,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
         aa_old = aa;
         ay_old = ay;
         // Update radius (iterative variable) (P-CONTROLLER FOR CONVERGENCE)
-        R = sign(ay_i) * (abs(0.8 * pow(v, 2) / ay_i) + abs(0.2 * R_old));
+        R = sign(ay_i) * (abs(0.6 * pow(v, 2) / ay_i) + abs(0.4 * R_old));
         R_old = R;
         //if (abs(R) > 10000) {
         //    R = INFINITY; // Band-aid
@@ -301,8 +301,8 @@ vec Vehicle::GetTorque(const double &T, const double &R, const double &yaw, cons
     }
     double Tf = fpt_tv * T;
     double Tr = (1 - fpt_tv) * T;
-    double dTf = Tf * c_ramp_f + c_prld_f;
-    double dTr = Tr * c_ramp_r + c_prld_r;
+    double dTf = Tf * c_ramp_f + c_prld_f + 0 * abs(yaw) * steer;
+    double dTr = Tr * c_ramp_r + c_prld_r + 0 * abs(yaw) * steer;
     vec Tw = 0.5 * vec({Tf - dTf, Tf + dTf, Tr - dTr, Tr + dTr});
     return Tw;
 }

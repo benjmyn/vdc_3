@@ -12,7 +12,7 @@ struct UpdateYmd {
     // Needs floats for sliders
     float v = 20;
     float R = 100;
-    float T = -300;
+    float T = 0;
     float yaw_range = 6;
     float steer_range = 10;
     int yaw_ct = 55;
