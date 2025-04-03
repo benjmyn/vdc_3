@@ -141,7 +141,7 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const double &yaw, const double &stee
     log.ay = ay;
     log.v = v;
 }
-void Vehicle::VelocityYawMoment(LogYmd &log, const double &yaw, const double &steer, const double &v, const double &T) {
+void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &yaw, const double &steer, const double &v, const double &T) {
     // Reset local variables
     double R = 1000; // Initial guess radius (is this optimal??)
     double R_old = R;
@@ -174,7 +174,8 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const double &yaw, const double &st
     double aa = 0;
     double aa_old = 0;
     // Convergence loop
-    const int ITER_TOTAL = floor(1500/pow(v,2) + 5);
+    //const int ITER_TOTAL = floor(1500/pow(v,2) + 5);
+    const int ITER_TOTAL = refines;
     for (int iter = 0; iter < ITER_TOTAL; ++iter) {
         // Update alignment
         roll = GetRoll(fy);

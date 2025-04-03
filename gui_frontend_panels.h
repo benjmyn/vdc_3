@@ -5,17 +5,19 @@
 #ifndef GUI_FRONTEND_PANELS_H
 #define GUI_FRONTEND_PANELS_H
 #include "Log.h"
+#include "VisualYmd.h"
 
 struct UpdateYmd {
     bool is_true = false;
     // Needs floats for sliders
-    float v = 10;
+    float v = 20;
     float R = 100;
-    float T = 0;
-    float yaw_range = 8;
-    float steer_range = 15;
+    float T = -300;
+    float yaw_range = 6;
+    float steer_range = 10;
     int yaw_ct = 55;
     int steer_ct = 55;
+    int refines = 7;
 };
 
 inline void PlotYmdLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start, const ImVec4 &col_yaw_end, const ImVec4 &col_steer_start, const ImVec4 &col_steer_end) {
@@ -107,6 +109,10 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::SliderInt("##slider3", &update_ymd.yaw_ct, 10, 100, "yaw isolines = %i");
         ImGui::SameLine();
         ImGui::SliderInt("##slider4", &update_ymd.steer_ct, 10, 100, "steer isolines = %i");
+        ImGui::SliderFloat("##slider5", &update_ymd.yaw_range, 0, 15, "yaw range = %.0f");
+        ImGui::SameLine();
+        ImGui::SliderFloat("##slider6", &update_ymd.steer_range, 0, 25, "steer range = %.0f");
+        ImGui::SliderInt("##slider7", &update_ymd.refines, 5, 40, "refines = %i");
         ImGui::PopItemWidth();
         ImGui::EndTabItem();
     }
@@ -117,9 +123,6 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
 inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
     ImGui::BeginChild("Right Panel", ImGui::GetContentRegionAvail(), true);
     ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
-    if(ImGui::BeginTabItem("Load Vehicle")){
-        ImGui::EndTabItem();
-    }
     if(ImGui::BeginTabItem("Tire Fitter")){
         ImGui::EndTabItem();
     }
@@ -130,9 +133,9 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImPlot::SetupAxis(ImAxis_Y1, "Yaw Accel (rad.s-2)", ImPlotAxisFlags_None);
         ImPlot::SetupAxisLimits(ImAxis_Y1, -25.0, 25.0, ImGuiCond_FirstUseEver);
         // YMD
-        static field<LogYmd> log = VisualYmdCV(car, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+        static field<LogYmd> log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
         if (update_ymd.is_true) {
-            log = VisualYmdCV(car, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+            log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
             update_ymd.is_true = false;
             //cout << "DEBUG SLIP:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).slip << endl;
             //cout << "DEBUG FXT:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).fxt << endl;
@@ -142,6 +145,9 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         PlotYmdLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1),
                             ImVec4(0, 0, 1, 1), ImVec4(0, 1, 0.5, 1));
         ImPlot::EndPlot();
+        ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Stability/Control")){
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Lap Time Simulation")){
