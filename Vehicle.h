@@ -35,6 +35,7 @@ public:
     double fpb; // Front braking [-]
     double crr; // Rolling resistance [N/N]
     double Re; // Effective radius [m]
+    double fpt; // Static front torque [-]
     // Aerodynamics
     double cxa, cza;
     vec cxe, cze;

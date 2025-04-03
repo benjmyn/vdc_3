@@ -32,6 +32,7 @@ Vehicle::Vehicle() {
     toer = 0.4;
     ack = 0.1;
     fpb = 0.75;
+    fpt = 0.00;
 
 
     // Calculated Values
@@ -280,13 +281,29 @@ vec Vehicle::GetSlip(const double &yaw, const vec &str, const double &R) {
     return beta_i + 57.3 * vec({0, 0, b/R, b/R}) - str;
 }
 vec Vehicle::GetTorque(const double &T, const double &R, const double &yaw, const double &steer, const double &v) {
-    vec Tw;
-    if (T >= 0) {
-        Tw = {0, 0, T/2, T/2};
+    double fpt_tv;
+    double c_prld_f, c_ramp_f, c_prld_r, c_ramp_r;
+    if (T >= 0) { // On-throttle
+        //Tw = {0, 0, T/2, T/2};
+        fpt_tv = fpt;
+        c_prld_f = sign(R) * 15 * 0.3;
+        c_ramp_f = sign(R) * sind(40) * 0.3;
+        c_prld_r = sign(R) * 15 * 0.3;
+        c_ramp_r = sign(R) * sind(40) * 0.3;
     }
-    else {
-        Tw = {fpb*T/2, fpb*T/2, (1-fpb)*T/2, (1-fpb)*T/2};
+    else { // Braking
+        //Tw = {fpb*T/2, fpb*T/2, (1-fpb)*T/2, (1-fpb)*T/2};
+        fpt_tv = fpb;
+        c_prld_f = sign(R) * 15 * 0.3;
+        c_ramp_f = -sign(R) * sind(50) * 0.3;
+        c_prld_r = sign(R) * 15 * 0.3;
+        c_ramp_r = -sign(R) * sind(50) * 0.3;
     }
+    double Tf = fpt_tv * T;
+    double Tr = (1 - fpt_tv) * T;
+    double dTf = Tf * c_ramp_f + c_prld_f;
+    double dTr = Tr * c_ramp_r + c_prld_r;
+    vec Tw = 0.5 * vec({Tf - dTf, Tf + dTf, Tr - dTr, Tr + dTr});
     return Tw;
 }
 field<vec> Vehicle::ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &str) {
