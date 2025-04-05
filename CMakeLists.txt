@@ -49,6 +49,7 @@ add_executable(vdc main.cpp
         gui_color_themes.h
         Log.h
         VisualYmd.h
+        diff.h
 )
 
 target_link_libraries(vdc ${ARMADILLO_LIBRARY} ${GLFW_LIBRARY})

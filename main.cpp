@@ -10,6 +10,7 @@
 #include <implot.h> // GUI-Plots
 using namespace std;
 using namespace arma;
+#include "diff.h"
 #include "Log.h"
 #include "Vehicle.h"
 #include "VisualYmd.h"
