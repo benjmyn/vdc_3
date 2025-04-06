@@ -14,6 +14,8 @@ Vehicle::Vehicle() {
     izz = 150;
     a = 0.8;
     b = 0.7;
+    cxa = 1.0;
+    cza = 0.0;
     cpx = 0.1;
     cpz = 0.1;
     cxe = {0, 0, 0, 0};
@@ -30,8 +32,10 @@ Vehicle::Vehicle() {
     cam_gain_r = 70;
     toef = -0.5;
     toer = 0.4;
+    toe_gain_f = 0;
+    toe_gain_r = 0;
     ack = 0.1;
-    fpb = 0.75;
+    fpb = 0.65;
     fpt = 0.00;
 
 
@@ -130,7 +134,7 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const double &yaw, const double &stee
         }
         mz = TireMz(slip, fz, inc, fyt);
         // Update acceleration
-        ax = GetAx(yaw, fx, fy);
+        ax = GetAx(yaw, fx, fy, fxa);
         ay = GetAy(yaw, fx, fy);
         aa = GetAa(fx, fy, mz);
         // Update velocity (iterative variable)
@@ -146,6 +150,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     // Reset local variables
     double R = 1000; // Initial guess radius (is this optimal??)
     double R_old = R;
+    Col<bool> fxflags = {false, false, false, false};
     // Alignment
     double roll = 0;
     double pitch = 0;
@@ -193,7 +198,14 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
         fz = TotalLoad(fx, fy, fza, mya, pitch, heave);
         // Update tire forces
         Tw = GetTorque(T, R, yaw, steer, v);
-        fxt = TireFx(Tw, fz, inc);
+        fxt = TireFx(Tw, fz, inc, fxflags);
+        if (iter == ITER_TOTAL - 1) { // Only checks "converged" value
+            for (int i = 0; i < 4; ++i) {
+                if (fxflags(i)) {
+                    fxt(i) = nan("");
+                }
+            }
+        }
         fyt = TireFy(fxt, slip, fz, inc);
         // Update corner forces
         f = ConvTireToCorner(fxt, fyt, str);
@@ -203,7 +215,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
         }
         mz = TireMz(slip, fz, inc, fyt);
         // Update acceleration
-        ax = GetAx(yaw, fx, fy);
+        ax = GetAx(yaw, fx, fy, fxa);
         ay = GetAy(yaw, fx, fy);
         aa = GetAa(fx, fy, mz);
         ay_i = 0.6 * ay + 0.4 * ay_old; // (P-CONTROLLER FOR CONVERGENCE)
@@ -238,15 +250,17 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     log.fxt = fxt;
     log.fyt = fyt;
     log.fz = fz;
+    log.Tw = Tw;
     log.yaw = yaw;
     log.steer = steer;
 }
-double Vehicle::GetAx(const double &yaw, const vec &fx, const vec &fy) const {
+double Vehicle::GetAx(const double &yaw, const vec &fx, const vec &fy, const double &fxa) const {
     double ax = 0;
     for (int i = 0; i < 4; ++i) {
         vec fxb = xform(vec({fx(i),fy(i)}), yaw);
         ax += fxb(0) / m;
     }
+    ax += xform(vec({fxa, 0}), yaw)(0) / m;
     return ax;
 }
 double Vehicle::GetAy(const double &yaw, const vec &fx, const vec &fy) const {
@@ -286,13 +300,17 @@ vec Vehicle::GetSlip(const double &yaw, const vec &str, const double &R) {
 vec Vehicle::GetTorque(const double &T, const double &R, const double &yaw, const double &steer, const double &v) {
     double fpt_tv;
     double c_prld_f, c_ramp_f, c_prld_r, c_ramp_r;
-    if (T >= 0) { // On-throttle
+    if (T > 0) { // On-throttle
         //Tw = {0, 0, T/2, T/2};
         fpt_tv = fpt;
-        c_prld_f = sign(R) * 15 * 0.3;
-        c_ramp_f = sign(R) * sind(40) * 0.3;
-        c_prld_r = sign(R) * 15 * 0.3;
-        c_ramp_r = sign(R) * sind(40) * 0.3;
+        //c_prld_f = sign(R) * 15 * 0.3;
+        c_prld_f = 0;
+        //c_ramp_f = sign(R) * sind(40) * 0.3;
+        c_ramp_f = 0;
+        //c_prld_r = sign(R) * 15 * 0.3;
+        c_prld_r = 0;
+        //c_ramp_r = sign(R) * sind(40) * 0.3;
+        c_ramp_r = 0;
     }
     else { // Braking
         //Tw = {fpb*T/2, fpb*T/2, (1-fpb)*T/2, (1-fpb)*T/2};
@@ -345,7 +363,7 @@ vec Vehicle::PacejkaFy(const vec &slip, const vec &fz, const vec &inc) {
 vec Vehicle::PacejkaMz(const vec &slip, const vec &fz) {
     return vec({0, 0, 0, 0}); // Placeholder!!!
 }
-vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc) {
+vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc, const Col<bool> &fxflags) {
     vec fxp = PacejkaFx(fz, inc); // Tire capability
     vec fxT = Tw / Re; // Demanded torque
     vec fxt(4);
@@ -356,7 +374,8 @@ vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc) {
         }
         else {
             // If demanded greater, use potential *** reduced for wheelspin
-            fxt(i) = 0.7 * fxp(i) * sign(Tw(i));
+            fxt(i) = 1.0 * fxp(i) * sign(Tw(i));
+            //fxt(i) = nan("");
         }
     }
     //fxt += 0.00 * fz; // Rolling resistance (fz is negative)
@@ -365,7 +384,8 @@ vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc) {
 vec Vehicle::TireFy(const vec &fxt, const vec &slip, const vec &fz, const vec &inc) {
     vec fxp = PacejkaFx(fz, inc);
     vec fyp = PacejkaFy(slip, fz, inc); // Based on pacejka equation
-    vec fyt = fyp % sqrt(1 - square(fxt / (1.00*fxp))); // Based on traction ellipse (conservative approximation)
+    vec fyt = fyp % sqrt(1.0f - pow(fxt / fxp, 2)); // Based on traction ellipse (conservative approximation)
+    //vec fyt = fyp % exp(-pow(fxt / fxp, 4)) / (pow(fxt / fxp, 20) + pow(0.5 * fxt / fxp, 2) + 1);
     return fyt;
 }
 vec Vehicle::TireMz(const vec &slip, const vec &fz, const vec &inc, const vec &fyt) {
@@ -373,7 +393,7 @@ vec Vehicle::TireMz(const vec &slip, const vec &fz, const vec &inc, const vec &f
 }
 double Vehicle::AeroFx(const double &v, const double &yaw, const double &roll, const double &pitch, const double &heave) {
     // Drag equation
-    double ex = prod(1 - cxe % vec({yaw, roll, pitch, heave}));
+    double ex = 1; //prod(1 - cxe % vec({yaw, roll, pitch, heave}));
     return -0.5 * 1.225 * ex * cxa * pow(v, 2);
 }
 double Vehicle::AeroFz(const double &v, const double &yaw, const double &roll, const double &pitch, const double &heave) {

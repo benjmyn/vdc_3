@@ -18,6 +18,7 @@ struct LogYmd {
     vec fxt;
     vec fyt;
     vec fz;
+    vec Tw;
 };
 struct LogLts {
 

@@ -61,7 +61,7 @@ public:
     // Dynamic Results (sideslip-frame)
     void RadiusYawMoment(LogYmd &log, const double &yaw, const double &steer, const double &R, const double &T);
     void VelocityYawMoment(LogYmd &log, int refines, const double &yaw, const double &steer, const double &v, const double &T);
-    double GetAx(const double &yaw, const vec &fx, const vec &fy) const;
+    double GetAx(const double &yaw, const vec &fx, const vec &fy, const double &fxa) const;
     double GetAy(const double &yaw, const vec &fx, const vec &fy) const;
     double GetAa(const vec &fx, const vec &fy, const vec &mz) const;
     // Update either V or R (sideslip-frame)
@@ -74,7 +74,7 @@ public:
     vec PacejkaFx(const vec &fz, const vec &inc); // Just maximum value
     vec PacejkaFy(const vec &slip, const vec &fz, const vec &inc); // Based on slip, inclination
     vec PacejkaMz(const vec &slip, const vec &fz); // Based on slip, ??
-    vec TireFx(const vec &Tw, const vec &fz, const vec &inc); // Minimum of demanded vs avail
+    vec TireFx(const vec &Tw, const vec &fz, const vec &inc, const Col<bool> &fxflags); // Minimum of demanded vs avail
     vec TireFy(const vec &fxt, const vec &slip, const vec &fz, const vec &inc); // Based on fx
     vec TireMz(const vec &slip, const vec &fz, const vec &inc, const vec &fyt); // Scaled to proportion of ideal fy
     field<vec> ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &str); // Tire forces -> Corner forces
