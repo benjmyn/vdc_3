@@ -78,74 +78,74 @@ Vehicle::Vehicle() {
 void Vehicle::LoadCalculatedAttributes() {
     l = a + b;
 }
-void Vehicle::RadiusYawMoment(LogYmd &log, const double &yaw, const double &steer, const double &R, const double &T) {
-    // Reset local variables
-    double v = 20; // Initial guess velocity (is this optimal??)
-    double v_old = v;
-    // Alignment
-    double roll = 0;
-    double pitch = 0;
-    double heave = 0;
-    vec inc = {0, 0, 0, 0};
-    vec str = {0, 0, 0, 0};
-    vec slip = {0, 0, 0, 0};
-    // Tire forces/moments
-    vec Tw = {0, 0, 0, 0};
-    vec fxt = {0, 0, 0, 0};
-    vec fyt = {0, 0, 0, 0};
-    // Corner forces/moments
-    field<vec> f(4);
-    vec fx = {0, 0, 0, 0};
-    vec fy = {0, 0, 0, 0};
-    vec fz = {0, 0, 0, 0};
-    vec mz = {0, 0, 0, 0};
-    // Aero forces/moments
-    double fxa = 0;
-    double fza = 0;
-    double mya = 0;
-    // Vehicle dynamics (wow!)
-    double ax = 0;
-    double ay = 0;
-    double aa = 0;
-    // Convergence loop
-    for (int iter = 0; iter < 4; ++iter) {
-        // Update alignment
-        roll = GetRoll(fy);
-        pitch = GetPitch(fz, mya);
-        heave = GetHeave(fz);
-        inc = GetInclination(steer, roll, pitch, heave);
-        str = GetSteer(steer, roll, pitch, heave);
-        slip = GetSlip(yaw, str, R);
-        // Update aerodynamic forces
-        fxa = AeroFx(v, yaw, roll, pitch, heave);
-        fza = AeroFz(v, yaw, roll, pitch, heave);
-        mya = AeroMy(fxa);
-        // Update normal forces
-        fz = TotalLoad(fx, fy, fza, mya, pitch, heave);
-        // Update tire forces
-        Tw = GetTorque(T, R, yaw, steer, v);
-        fxt = TireFx(Tw, fz, inc);
-        fyt = TireFy(fxt, slip, fz, inc);
-        // Update corner forces
-        f = ConvTireToCorner(fxt, fyt, str);
-        for (int i = 0; i < 4; ++i) {
-            fx(i) = f(i)(0);
-            fy(i) = f(i)(1);
-        }
-        mz = TireMz(slip, fz, inc, fyt);
-        // Update acceleration
-        ax = GetAx(yaw, fx, fy, fxa);
-        ay = GetAy(yaw, fx, fy);
-        aa = GetAa(fx, fy, mz);
-        // Update velocity (iterative variable)
-        v = 0.9 * sqrt(R * ay) + 0.1 * v_old;
-        v_old = v;
-    }
-    log.aa = aa;
-    log.ax = ax;
-    log.ay = ay;
-    log.v = v;
-}
+//void Vehicle::RadiusYawMoment(LogYmd &log, const double &yaw, const double &steer, const double &R, const double &T) {
+//    // Reset local variables
+//    double v = 20; // Initial guess velocity (is this optimal??)
+//    double v_old = v;
+//    // Alignment
+//    double roll = 0;
+//    double pitch = 0;
+//    double heave = 0;
+//    vec inc = {0, 0, 0, 0};
+//    vec str = {0, 0, 0, 0};
+//    vec slip = {0, 0, 0, 0};
+//    // Tire forces/moments
+//    vec Tw = {0, 0, 0, 0};
+//    vec fxt = {0, 0, 0, 0};
+//    vec fyt = {0, 0, 0, 0};
+//    // Corner forces/moments
+//    field<vec> f(4);
+//    vec fx = {0, 0, 0, 0};
+//    vec fy = {0, 0, 0, 0};
+//    vec fz = {0, 0, 0, 0};
+//    vec mz = {0, 0, 0, 0};
+//    // Aero forces/moments
+//    double fxa = 0;
+//    double fza = 0;
+//    double mya = 0;
+//    // Vehicle dynamics (wow!)
+//    double ax = 0;
+//    double ay = 0;
+//    double aa = 0;
+//    // Convergence loop
+//    for (int iter = 0; iter < 4; ++iter) {
+//        // Update alignment
+//        roll = GetRoll(fy);
+//        pitch = GetPitch(fz, mya);
+//        heave = GetHeave(fz);
+//        inc = GetInclination(steer, roll, pitch, heave);
+//        str = GetSteer(steer, roll, pitch, heave);
+//        slip = GetSlip(yaw, str, R);
+//        // Update aerodynamic forces
+//        fxa = AeroFx(v, yaw, roll, pitch, heave);
+//        fza = AeroFz(v, yaw, roll, pitch, heave);
+//        mya = AeroMy(fxa);
+//        // Update normal forces
+//        fz = TotalLoad(fx, fy, fza, mya, pitch, heave);
+//        // Update tire forces
+//        Tw = GetTorque(T, R, yaw, steer, v);
+//        fxt = TireFx(Tw, fz, inc);
+//        fyt = TireFy(fxt, slip, fz, inc);
+//        // Update corner forces
+//        f = ConvTireToCorner(fxt, fyt, str);
+//        for (int i = 0; i < 4; ++i) {
+//            fx(i) = f(i)(0);
+//            fy(i) = f(i)(1);
+//        }
+//        mz = TireMz(slip, fz, inc, fyt);
+//        // Update acceleration
+//        ax = GetAx(yaw, fx, fy, fxa);
+//        ay = GetAy(yaw, fx, fy);
+//        aa = GetAa(fx, fy, mz);
+//        // Update velocity (iterative variable)
+//        v = 0.9 * sqrt(R * ay) + 0.1 * v_old;
+//        v_old = v;
+//    }
+//    log.aa = aa;
+//    log.ax = ax;
+//    log.ay = ay;
+//    log.v = v;
+//}
 void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &yaw, const double &steer, const double &v, const double &T) {
     // Reset local variables
     double R = 1000; // Initial guess radius (is this optimal??)
