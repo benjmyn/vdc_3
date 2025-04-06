@@ -74,7 +74,7 @@ public:
     vec PacejkaFx(const vec &fz, const vec &inc); // Just maximum value
     vec PacejkaFy(const vec &slip, const vec &fz, const vec &inc); // Based on slip, inclination
     vec PacejkaMz(const vec &slip, const vec &fz); // Based on slip, ??
-    vec TireFx(const vec &Tw, const vec &fz, const vec &inc, const Col<bool> &fxflags); // Minimum of demanded vs avail
+    vec TireFx(const vec &Tw, const vec &fz, const vec &inc, uvec &fxflags); // Minimum of demanded vs avail
     vec TireFy(const vec &fxt, const vec &slip, const vec &fz, const vec &inc); // Based on fx
     vec TireMz(const vec &slip, const vec &fz, const vec &inc, const vec &fyt); // Scaled to proportion of ideal fy
     field<vec> ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &str); // Tire forces -> Corner forces

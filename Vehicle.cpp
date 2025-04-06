@@ -14,8 +14,8 @@ Vehicle::Vehicle() {
     izz = 150;
     a = 0.8;
     b = 0.7;
-    cxa = 1.0;
-    cza = 0.0;
+    cxa = 2.0;
+    cza = -0.0;
     cpx = 0.1;
     cpz = 0.1;
     cxe = {0, 0, 0, 0};
@@ -48,9 +48,9 @@ Vehicle::Vehicle() {
     pos_whl(3) = {-b, -tr/2};
 
     p94x = {0.0, -0.674, 3.44};
-    p94xs = {0.53};
+    p94xs = {0.60};
     p94y = {1.250, -0.14, 2.65, 2500.0, 611.0, 0.05, 1.03, -2.39, 0.0, 0.0, 0.100, 0.0, 0.0, 0.0, -22, 0.003, 0.030, 0.0};
-    p94ys = {0.53, 1.10};
+    p94ys = {0.60, 1.10};
 
     // Heave & roll stiffnesses
     mraf = 1.0;
@@ -150,7 +150,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     // Reset local variables
     double R = 1000; // Initial guess radius (is this optimal??)
     double R_old = R;
-    Col<bool> fxflags = {false, false, false, false};
+    uvec fxflags = {0, 0, 0, 0};
     // Alignment
     double roll = 0;
     double pitch = 0;
@@ -201,7 +201,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
         fxt = TireFx(Tw, fz, inc, fxflags);
         if (iter == ITER_TOTAL - 1) { // Only checks "converged" value
             for (int i = 0; i < 4; ++i) {
-                if (fxflags(i)) {
+                if (fxflags(i) == 1) {
                     fxt(i) = nan("");
                 }
             }
@@ -225,9 +225,9 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
             printf("Error #%i) %.1f%% at yaw = %.0f, steer = %.0f\n",
                 ++err_total, 100 * (1 - ay/ay_old), yaw, steer);
         }
-        if (iter >= 4 && abs(1 - ay/ay_old) < 0.001 && abs(1 - aa/aa_old) < 0.001) {
-            iter = ITER_TOTAL; // break out
-        }
+        //if (iter >= 4 && abs(1 - ay/ay_old) < 0.001 && abs(1 - aa/aa_old) < 0.001) {
+        //    iter = ITER_TOTAL; // break out early
+        //}
         aa_old = aa;
         ay_old = ay;
         // Update radius (iterative variable) (P-CONTROLLER FOR CONVERGENCE)
@@ -339,7 +339,9 @@ field<vec> Vehicle::ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &
 vec Vehicle::PacejkaFx(const vec &fz, const vec &inc){
     const vec fzn = -fz;
     const vec fzkn = fzn / 1000;
-    return (p94x(2) * fzkn + p94x(1)) % (1 - 0.01 * abs(inc)) % fzn * p94xs(0);
+    vec fxp = fzn % (p94x(2) * fzkn + p94x(1));
+    return p94xs(0) * fxp;
+    //return (p94x(2) * fzkn + p94x(1)) % (1 - 0.01 * abs(inc)) % fzn * p94xs(0);
 }
 vec Vehicle::PacejkaFy(const vec &slip, const vec &fz, const vec &inc) {
     const vec fzn = -fz;
@@ -363,18 +365,20 @@ vec Vehicle::PacejkaFy(const vec &slip, const vec &fz, const vec &inc) {
 vec Vehicle::PacejkaMz(const vec &slip, const vec &fz) {
     return vec({0, 0, 0, 0}); // Placeholder!!!
 }
-vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc, const Col<bool> &fxflags) {
+vec Vehicle::TireFx(const vec &Tw, const vec &fz, const vec &inc, uvec &fxflags) {
     vec fxp = PacejkaFx(fz, inc); // Tire capability
     vec fxT = Tw / Re; // Demanded torque
     vec fxt(4);
     for (int i = 0; i < 4; ++i) {
         if (abs(fxp(i)) > abs(fxT(i))) {
             // If demanded less than potential, use demanded
+            fxflags(i) = 0;
             fxt(i) = fxT(i);
         }
         else {
             // If demanded greater, use potential *** reduced for wheelspin
-            fxt(i) = 1.0 * fxp(i) * sign(Tw(i));
+            fxflags(i) = 1;
+            fxt(i) = 0.7 * fxp(i) * sign(Tw(i));
             //fxt(i) = nan("");
         }
     }
