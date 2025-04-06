@@ -237,6 +237,9 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     log.slip = slip;
     log.fxt = fxt;
     log.fyt = fyt;
+    log.fz = fz;
+    log.yaw = yaw;
+    log.steer = steer;
 }
 double Vehicle::GetAx(const double &yaw, const vec &fx, const vec &fy) const {
     double ax = 0;
@@ -294,16 +297,18 @@ vec Vehicle::GetTorque(const double &T, const double &R, const double &yaw, cons
     else { // Braking
         //Tw = {fpb*T/2, fpb*T/2, (1-fpb)*T/2, (1-fpb)*T/2};
         fpt_tv = fpb;
-        c_prld_f = sign(R) * 15 * 0.3;
-        c_ramp_f = -sign(R) * sind(50) * 0.3;
-        c_prld_r = sign(R) * 15 * 0.3;
-        c_ramp_r = -sign(R) * sind(50) * 0.3;
+        c_prld_f = 0;
+        c_ramp_f = 0;
+        c_prld_r = 0;
+        c_ramp_r = 0;
     }
     double Tf = fpt_tv * T;
     double Tr = (1 - fpt_tv) * T;
     double dTf = Tf * c_ramp_f + c_prld_f + 0 * abs(yaw) * steer;
     double dTr = Tr * c_ramp_r + c_prld_r + 0 * abs(yaw) * steer;
     vec Tw = 0.5 * vec({Tf - dTf, Tf + dTf, Tr - dTr, Tr + dTr});
+    // debug
+    //Tw = vec({0, 0, 0, 0});
     return Tw;
 }
 field<vec> Vehicle::ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &str) {
