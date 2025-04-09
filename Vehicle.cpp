@@ -301,36 +301,19 @@ vec Vehicle::GetSlip(const double &yaw, const vec &str, const double &R) {
     return beta_i + 57.3 * vec({0, 0, b/R, b/R}) - str;
 }
 vec Vehicle::GetTorque(const double &T, const double &R, const double &yaw, const double &steer, const double &v) {
-    double fpt_tv;
-    double c_prld_f, c_ramp_f, c_prld_r, c_ramp_r;
-    if (T > 0) { // On-throttle
-        //Tw = {0, 0, T/2, T/2};
-        fpt_tv = fpt;
-        //c_prld_f = sign(R) * 15 * 0.3;
-        c_prld_f = 0;
-        //c_ramp_f = sign(R) * sind(40) * 0.3;
-        c_ramp_f = 0;
-        //c_prld_r = sign(R) * 15 * 0.3;
-        c_prld_r = 0;
-        //c_ramp_r = sign(R) * sind(40) * 0.3;
-        c_ramp_r = 0;
+    vec Tv;
+    if (T > 0) {
+        double c_lat_f = 0;
+        double c_lat_r = 0;
+        double c_long = 1 - fpt * 2;
+        double Tf = T * (1 - c_long) / 2;
+        double Tr = T - Tf;
+        Tv = {Tf * (1 - c_lat_f) / 2, Tf * (1 + c_lat_f) / 2, Tr * (1 - c_lat_r) / 2, Tr * (1 + c_lat_r) / 2};
     }
-    else { // Braking
-        //Tw = {fpb*T/2, fpb*T/2, (1-fpb)*T/2, (1-fpb)*T/2};
-        fpt_tv = fpb;
-        c_prld_f = 0;
-        c_ramp_f = 0;
-        c_prld_r = 0;
-        c_ramp_r = 0;
+    else {
+        Tv = {fpb * T / 2, fpb * T / 2, (1 - fpb) * T / 2, (1 - fpb) * T / 2};
     }
-    double Tf = fpt_tv * T;
-    double Tr = (1 - fpt_tv) * T;
-    double dTf = Tf * c_ramp_f + c_prld_f + 0 * abs(yaw) * steer;
-    double dTr = Tr * c_ramp_r + c_prld_r + 0 * abs(yaw) * steer;
-    vec Tw = 0.5 * vec({Tf - dTf, Tf + dTf, Tr - dTr, Tr + dTr});
-    // debug
-    //Tw = vec({0, 0, 0, 0});
-    return Tw;
+    return Tv;
 }
 field<vec> Vehicle::ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &str) {
     field<vec> f(4);
@@ -342,7 +325,7 @@ field<vec> Vehicle::ConvTireToCorner(const vec &fxt, const vec &fyt, const vec &
 vec Vehicle::PacejkaFx(const vec &fz, const vec &inc){
     const vec fzn = -fz;
     const vec fzkn = fzn / 1000;
-    vec fxp = fzn % (p94x(2) * fzkn + p94x(1));
+    vec fxp = fzn % (p94x(1) * fzkn + p94x(2));
     return p94xs(0) * fxp;
     //return (p94x(2) * fzkn + p94x(1)) % (1 - 0.01 * abs(inc)) % fzn * p94xs(0);
 }
