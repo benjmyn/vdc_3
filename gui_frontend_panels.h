@@ -295,7 +295,7 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         // Stability Plot
         ImPlot::BeginPlot("##Stability", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y/2));
         ImPlot::SetupAxis(ImAxis_X1, "Yaw (deg)", ImPlotAxisFlags_AutoFit);
-        ImPlot::SetupAxis(ImAxis_Y1, "Stability (rad/deg.s-2)", ImPlotAxisFlags_None);
+        ImPlot::SetupAxis(ImAxis_Y1, "Stability (rad/deg.s-2)", ImPlotAxisFlags_Invert);
         ImPlot::SetupAxisLimits(ImAxis_Y1, -6.0, 8.0, ImGuiCond_FirstUseEver);
         PlotStabLines(log, ImVec4(0, 0, 1, 1), ImVec4(0, 1, 0.5, 1));
         ImPlot::EndPlot();
