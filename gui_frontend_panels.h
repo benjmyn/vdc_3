@@ -92,7 +92,7 @@ inline void PlotStabLines(const field<LogYmd> &log, const ImVec4 &col_steer_star
     ImVec4 color; // Constant steer
     float rat;
     for (int j = 0; j < log.n_cols; ++j) { // For each column (steer) plot a line (stability vs. yaw)
-        string name = "##steer_"+to_string(j);
+        string name = "##stability_"+to_string(j);
         double yaw_arr[log.n_rows];
         double aa_arr[log.n_rows];
         double dadb_arr[log.n_rows];
@@ -110,11 +110,33 @@ inline void PlotStabLines(const field<LogYmd> &log, const ImVec4 &col_steer_star
         ImPlot::PopStyleColor();
     }
 }
+inline void PlotYawLines(const field<LogYmd> &log, const ImVec4 &col_steer_start, const ImVec4 &col_steer_end) {
+    ImVec4 color; // Constant steer
+    float rat;
+    for (int j = 0; j < log.n_cols; ++j) { // For each column (steer) plot a line (stability vs. yaw)
+        string name = "##yaw_"+to_string(j);
+        double yaw_arr[log.n_rows];
+        double aa_arr[log.n_rows];
+        //double dadb_arr[log.n_rows];
+        for (int i = 0; i < log.n_rows; ++i) {
+            yaw_arr[i] = log(i, j).yaw;
+            aa_arr[i] = log(i, j).aa;
+        }
+        //diffdb(dadb_arr, yaw_arr, aa_arr, log.n_rows);
+        rat = (float)j / (float)(log.n_cols - 1);
+        color = ImVec4(col_steer_start.x * (1-rat) + col_steer_end.x * rat,
+                      col_steer_start.y * (1-rat) + col_steer_end.y * rat,
+                      col_steer_start.z * (1-rat) + col_steer_end.z * rat, 255);
+        ImPlot::PushStyleColor(ImPlotCol_Line, ImGui::ColorConvertFloat4ToU32(color));
+        ImPlot::PlotLine(name.c_str(), yaw_arr, aa_arr, log.n_rows);
+        ImPlot::PopStyleColor();
+    }
+}
 inline void PlotContLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start, const ImVec4 &col_yaw_end) {
     ImVec4 color;
     float rat;
     for (int i = 0; i < log.n_rows; ++i) { // Constant yaw, vary steer
-        string name = "##yaw_"+to_string(i);
+        string name = "##control_"+to_string(i);
         double steer_arr[log.n_cols];
         double aa_arr[log.n_cols];
         double dads_arr[log.n_cols];
@@ -129,6 +151,28 @@ inline void PlotContLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start,
                       col_yaw_start.z * (1-rat) + col_yaw_end.z * rat, 255);
         ImPlot::PushStyleColor(ImPlotCol_Line, ImGui::ColorConvertFloat4ToU32(color));
         ImPlot::PlotLine(name.c_str(), steer_arr, dads_arr, log.n_cols);
+        ImPlot::PopStyleColor();
+    }
+}
+inline void PlotSteerLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start, const ImVec4 &col_yaw_end) {
+    ImVec4 color;
+    float rat;
+    for (int i = 0; i < log.n_rows; ++i) { // Constant yaw, vary steer
+        string name = "##steer_"+to_string(i);
+        double steer_arr[log.n_cols];
+        double aa_arr[log.n_cols];
+        //double dads_arr[log.n_cols];
+        for (int j = 0; j < log.n_cols; ++j) {
+            steer_arr[j] = log(i, j).steer;
+            aa_arr[j] = log(i, j).aa;
+        }
+        //diffdb(dads_arr, steer_arr, aa_arr, log.n_cols);
+        rat = (float)i / (float)(log.n_rows - 1);
+        color = ImVec4(col_yaw_start.x * (1-rat) + col_yaw_end.x * rat,
+                      col_yaw_start.y * (1-rat) + col_yaw_end.y * rat,
+                      col_yaw_start.z * (1-rat) + col_yaw_end.z * rat, 255);
+        ImPlot::PushStyleColor(ImPlotCol_Line, ImGui::ColorConvertFloat4ToU32(color));
+        ImPlot::PlotLine(name.c_str(), steer_arr, aa_arr, log.n_cols);
         ImPlot::PopStyleColor();
     }
 }
@@ -233,20 +277,36 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
             //cout << "DEBUG FXT:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).fxt << endl;
             //cout << "DEBUG FYT:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).fyt << endl;
         }
+        ImPlot::BeginSubplots("##Subplots", 2, 2, ImGui::GetContentRegionAvail());
+        // Yaw Plot
+        ImPlot::BeginPlot("##Yaw", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y/2));
+        ImPlot::SetupAxis(ImAxis_X1, "Yaw (deg)", ImPlotAxisFlags_AutoFit);
+        ImPlot::SetupAxis(ImAxis_Y1, "Yaw Accel (rad/s-2)", ImPlotAxisFlags_None);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, -30.0, 30.0, ImGuiCond_FirstUseEver);
+        PlotYawLines(log, ImVec4(0, 0, 1, 1), ImVec4(0, 1, 0.5, 1));
+        ImPlot::EndPlot();
+        // Steer Plot
+        ImPlot::BeginPlot("##Steer", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
+        ImPlot::SetupAxis(ImAxis_X1, "Steer (deg)", ImPlotAxisFlags_AutoFit);
+        ImPlot::SetupAxis(ImAxis_Y1, "Yaw Accel (rad/s-2)", ImPlotAxisFlags_None);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, -30.0, 30.0, ImGuiCond_FirstUseEver);
+        PlotSteerLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1));
+        ImPlot::EndPlot();
         // Stability Plot
         ImPlot::BeginPlot("##Stability", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y/2));
         ImPlot::SetupAxis(ImAxis_X1, "Yaw (deg)", ImPlotAxisFlags_AutoFit);
-        ImPlot::SetupAxis(ImAxis_Y1, "Stability (rad.s-2/deg)", ImPlotAxisFlags_None);
+        ImPlot::SetupAxis(ImAxis_Y1, "Stability (rad/deg.s-2)", ImPlotAxisFlags_None);
         ImPlot::SetupAxisLimits(ImAxis_Y1, -6.0, 8.0, ImGuiCond_FirstUseEver);
         PlotStabLines(log, ImVec4(0, 0, 1, 1), ImVec4(0, 1, 0.5, 1));
         ImPlot::EndPlot();
         // Control Plot
         ImPlot::BeginPlot("##Control", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
         ImPlot::SetupAxis(ImAxis_X1, "Steer (deg)", ImPlotAxisFlags_AutoFit);
-        ImPlot::SetupAxis(ImAxis_Y1, "Control (rad.s-2/deg)", ImPlotAxisFlags_None);
+        ImPlot::SetupAxis(ImAxis_Y1, "Control (rad/deg.s-2)", ImPlotAxisFlags_None);
         ImPlot::SetupAxisLimits(ImAxis_Y1, -2.0, 5.0, ImGuiCond_FirstUseEver);
         PlotContLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1));
         ImPlot::EndPlot();
+        ImPlot::EndSubplots();
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Lap Time Simulation")){
