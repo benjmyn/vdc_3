@@ -36,14 +36,17 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                             "fy = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
                             "fz = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
                             "yaw = %.1f\n"
-                            "steer = %.1f\n",
+                            "steer = %.1f\n"
+                            "fxflags =\n %u %u\n %u %u",
                             log(i, j).ax, log(i,j).ay, log(i,j).aa,
                             log(i, j).slip(0), log(i, j).slip(1), log(i, j).slip(2), log(i, j).slip(3),
                             log(i, j).Tw(0), log(i, j).Tw(1), log(i, j).Tw(2), log(i, j).Tw(3),
                             log(i, j).fxt(0), log(i, j).fxt(1), log(i, j).fxt(2), log(i, j).fxt(3),
                             log(i, j).fyt(0), log(i, j).fyt(1), log(i, j).fyt(2), log(i, j).fyt(3),
                             log(i, j).fz(0), log(i, j).fz(1), log(i, j).fz(2), log(i, j).fz(3),
-                            log(i,j).yaw, log(i, j).steer);
+                            log(i,j).yaw, log(i, j).steer,
+                            log(i, j).fxflags(0), log(i, j).fxflags(1), log(i, j).fxflags(2), log(i, j).fxflags(3)
+                            );
             }
         }
     }

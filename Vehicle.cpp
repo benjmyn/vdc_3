@@ -202,6 +202,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
         if (iter == ITER_TOTAL - 1) { // Only checks "converged" value
             for (int i = 0; i < 4; ++i) {
                 if (fxflags(i) == 1) {
+                    //fxt(i) = 0.7 * fxt(i);
                     fxt(i) = nan("");
                 }
             }
@@ -231,7 +232,8 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
         aa_old = aa;
         ay_old = ay;
         // Update radius (iterative variable) (P-CONTROLLER FOR CONVERGENCE)
-        R = sign(ay_i) * (abs(0.6 * pow(v, 2) / ay_i) + abs(0.4 * R_old));
+        //R = sign(ay_i) * (abs(0.1 * pow(v, 2) / ay_i) + abs(0.9 * R_old));
+        R = pow(v, 2) / ay_i;
         R_old = R;
         //if (abs(R) > 10000) {
         //    R = INFINITY; // Band-aid
@@ -253,6 +255,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     log.Tw = Tw;
     log.yaw = yaw;
     log.steer = steer;
+    log.fxflags = fxflags;
 }
 double Vehicle::GetAx(const double &yaw, const vec &fx, const vec &fy, const double &fxa) const {
     double ax = 0;
