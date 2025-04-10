@@ -10,6 +10,7 @@
 
 struct UpdateYmd {
     bool is_true = false;
+    int type = 0; // 0: const V, 1: const R, 2: LTS
     // Needs floats for sliders
     float v = 20;
     float R = 100;
@@ -179,7 +180,7 @@ inline void PlotSteerLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start
 inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
     ImGui::BeginChild("Left Panel", ImVec2(450, ImGui::GetContentRegionAvail().y), true);
     ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
-    if(ImGui::BeginTabItem("Title Card")){
+    if(ImGui::BeginTabItem("Plot Controls")){
         // Title card itself
         const static string titlecard =
                         "     ___________   ____  ___  _____  _____  \n"
@@ -208,7 +209,67 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
             ImGui::StyleColorsCustomDark();
             ImPlot::StyleColorsDark();
         }
-	    ImGui::EndTabItem();
+        ImGui::NewLine();
+        ImGui::Separator();
+        // Toggleable modes
+        ImGui::SetCursorPos(ImVec2(32 + ImGui::GetCursorPosX(), 12 + ImGui::GetCursorPosY()));
+        ImGui::BeginGroup();
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::RadioButton("Const. Velocity", &update_ymd.type, 0);
+        ImGui::RadioButton("Const. Radius", &update_ymd.type, 1);
+        ImGui::RadioButton("Lap Time Sim", &update_ymd.type, 2);
+        ImGui::PopStyleVar();
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        // Generate button
+        ImGui::BeginGroup();
+        ImGui::SetCursorPos(ImVec2(48 + ImGui::GetCursorPosX(), 16 + ImGui::GetCursorPosY()));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
+        if (ImGui::Button("Generate\n  Data")){update_ymd.is_true = true;}
+        ImGui::PopStyleVar();
+        ImGui::EndGroup();
+
+        // Put specifics here
+        ImGui::NewLine();
+        ImGui::SeparatorText("Plot Controls");
+        ImGui::PushItemWidth(212);
+        ImGui::BeginGroup();
+        {
+            switch (update_ymd.type) {
+                case 0:
+                    ImGui::Text("Velocity:");
+                    ImGui::SliderFloat("##slider1", &update_ymd.v, 10, 30, "v = %.0f m/s");
+                    break;
+                case 1:
+                    ImGui::Text("Radius:");
+                    ImGui::SliderFloat("##slider1", &update_ymd.R, 10, 100, "R = %.0f m");
+                    break;
+                case 2:
+                    break;
+            }
+
+            //
+
+        }
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+        {
+            ImGui::Text("Applied Torque:");
+            ImGui::SliderFloat("##slider2", &update_ymd.T, -1000, 800, "T = %.0f N.m");
+        }
+        ImGui::EndGroup();
+        //ImGui::SameLine();
+        //ImGui::SliderInt("##slider3", &update_ymd.yaw_ct, 10, 100, "yaw isolines = %i");
+        //ImGui::SameLine();
+        //ImGui::SliderInt("##slider4", &update_ymd.steer_ct, 10, 100, "steer isolines = %i");
+        //ImGui::SliderFloat("##slider5", &update_ymd.yaw_range, 0, 15, "yaw range = %.0f");
+        //ImGui::SameLine();
+        //ImGui::SliderFloat("##slider6", &update_ymd.steer_range, 0, 25, "steer range = %.0f");
+        //ImGui::SliderInt("##slider7", &update_ymd.refines, 5, 40, "refines = %i");
+        ImGui::PopItemWidth();
+        ImGui::Separator();
+        ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Vehicle")){
         ImGui::EndTabItem();
@@ -219,23 +280,6 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
     if(ImGui::BeginTabItem("Motor Control")){
         ImGui::EndTabItem();
     }
-    if(ImGui::BeginTabItem("YMD Inputs")){
-        ImGui::SeparatorText("Yaw Moment Diagram Control");
-        if (ImGui::Button("Update YMD")){update_ymd.is_true = true;}
-        ImGui::PushItemWidth(212);
-        ImGui::SliderFloat("##slider1", &update_ymd.v, 10, 30, "v = %.0f");
-        ImGui::SameLine();
-        ImGui::SliderFloat("##slider2", &update_ymd.T, -1000, 800, "T = %.0f");
-        ImGui::SliderInt("##slider3", &update_ymd.yaw_ct, 10, 100, "yaw isolines = %i");
-        ImGui::SameLine();
-        ImGui::SliderInt("##slider4", &update_ymd.steer_ct, 10, 100, "steer isolines = %i");
-        ImGui::SliderFloat("##slider5", &update_ymd.yaw_range, 0, 15, "yaw range = %.0f");
-        ImGui::SameLine();
-        ImGui::SliderFloat("##slider6", &update_ymd.steer_range, 0, 25, "steer range = %.0f");
-        ImGui::SliderInt("##slider7", &update_ymd.refines, 5, 40, "refines = %i");
-        ImGui::PopItemWidth();
-        ImGui::EndTabItem();
-    }
     ImGui::EndTabBar();
     ImGui::EndChild();
     ImGui::SameLine();
@@ -243,9 +287,6 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
 inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
     ImGui::BeginChild("Right Panel", ImGui::GetContentRegionAvail(), true);
     ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
-    if(ImGui::BeginTabItem("Tire Fitter")){
-        ImGui::EndTabItem();
-    }
     if(ImGui::BeginTabItem("Yaw Moment Diagram")){
         ImPlot::BeginPlot("Yaw Moment Diagram", ImGui::GetContentRegionAvail());
         ImPlot::SetupAxis(ImAxis_X1, "Lateral Accel (m.s-2)", ImPlotAxisFlags_None);
@@ -307,6 +348,9 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         PlotContLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1));
         ImPlot::EndPlot();
         ImPlot::EndSubplots();
+        ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Tire Fitter")){
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Lap Time Simulation")){
