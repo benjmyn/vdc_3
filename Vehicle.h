@@ -59,7 +59,7 @@ public:
     void LoadPowertrain();
     void LoadCalculatedAttributes();
     // Dynamic Results (sideslip-frame)
-    void RadiusYawMoment(LogYmd &log, const double &yaw, const double &steer, const double &R, const double &T);
+    void RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw, const double &steer, const double &R, const double &T);
     void VelocityYawMoment(LogYmd &log, int refines, const double &yaw, const double &steer, const double &v, const double &T);
     double GetAx(const double &yaw, const vec &fx, const vec &fy, const double &fxa) const;
     double GetAy(const double &yaw, const vec &fx, const vec &fy) const;

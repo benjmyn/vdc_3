@@ -7,7 +7,17 @@
 #include "diff.h"
 #include "Log.h"
 #include "VisualYmd.h"
-
+static void HelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
 struct UpdateYmd {
     bool is_true = false;
     int type = 0; // 0: const V, 1: const R, 2: LTS
@@ -19,9 +29,8 @@ struct UpdateYmd {
     float steer_range = 10;
     int yaw_ct = 55;
     int steer_ct = 55;
-    int refines = 7;
+    int refines = 10;
 };
-
 inline void PlotYmdTooltip(const field<LogYmd> &log) {
     for (int i = 0; i < log.n_rows; ++i) {
         for (int j = 0; j < log.n_cols; ++j) {
@@ -30,29 +39,31 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
             double dx = mouse_pos.x - point_pos.x;
             double dy = mouse_pos.y - point_pos.y;
             if (sqrt(dx*dx+dy*dy) < 5) {
-                ImGui::SetTooltip("ax = %.2fm.s-2\nay = %.2fm.s-2\naa = %.2frad.s-2\n"
+                ImGui::SetTooltip(
+                        "v = %.0f m/s\nR = %.0f m\n"
+                            "ax = %.2f G\nay = %.2f G\naa = %.2f rad.s-2\n"
                             "slip = \n %+.1f° %+.1f°\n %+.1f° %+.1f°\n"
-                            "Tw = \n %+.0f %+.0f [Nm]\n %+.0f %+.0f [Nm]\n"
-                            "fx = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                            "fy = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                            "fz = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                            "yaw = %.1f\n"
-                            "steer = %.1f\n"
-                            "fxflags =\n %u %u\n %u %u",
-                            log(i, j).ax, log(i,j).ay, log(i,j).aa,
+                            "Tw = \n %+.0f %+.0f N.m\n %+.0f %+.0f N.m\n"
+                            //"fx = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
+                            //"fy = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
+                            //"fz = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
+                            "yaw = %.1f°\n"
+                            "steer = %.1f°\n",
+                            //"fxflags =\n %u %u\n %u %u",
+                            log(i, j).v, log(i,j).R,
+                            log(i, j).ax / 9.81, log(i,j).ay / 9.81, log(i,j).aa,
                             log(i, j).slip(0), log(i, j).slip(1), log(i, j).slip(2), log(i, j).slip(3),
                             log(i, j).Tw(0), log(i, j).Tw(1), log(i, j).Tw(2), log(i, j).Tw(3),
-                            log(i, j).fxt(0), log(i, j).fxt(1), log(i, j).fxt(2), log(i, j).fxt(3),
-                            log(i, j).fyt(0), log(i, j).fyt(1), log(i, j).fyt(2), log(i, j).fyt(3),
-                            log(i, j).fz(0), log(i, j).fz(1), log(i, j).fz(2), log(i, j).fz(3),
-                            log(i,j).yaw, log(i, j).steer,
-                            log(i, j).fxflags(0), log(i, j).fxflags(1), log(i, j).fxflags(2), log(i, j).fxflags(3)
+                            //log(i, j).fxt(0), log(i, j).fxt(1), log(i, j).fxt(2), log(i, j).fxt(3),
+                            //log(i, j).fyt(0), log(i, j).fyt(1), log(i, j).fyt(2), log(i, j).fyt(3),
+                            //log(i, j).fz(0), log(i, j).fz(1), log(i, j).fz(2), log(i, j).fz(3),
+                            log(i,j).yaw, log(i, j).steer
+                            //log(i, j).fxflags(0), log(i, j).fxflags(1), log(i, j).fxflags(2), log(i, j).fxflags(3)
                             );
             }
         }
     }
 }
-
 inline void PlotYmdLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start, const ImVec4 &col_yaw_end, const ImVec4 &col_steer_start, const ImVec4 &col_steer_end) {
     ImVec4 color;
     float rat;
@@ -223,50 +234,50 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::SameLine();
         // Generate button
         ImGui::BeginGroup();
-        ImGui::SetCursorPos(ImVec2(48 + ImGui::GetCursorPosX(), 16 + ImGui::GetCursorPosY()));
+        ImGui::SetCursorPos(ImVec2(48 + ImGui::GetCursorPosX(), 0 + ImGui::GetCursorPosY()));
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
         if (ImGui::Button("Generate\n  Data")){update_ymd.is_true = true;}
         ImGui::PopStyleVar();
         ImGui::EndGroup();
 
         // Put specifics here
-        ImGui::NewLine();
+        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), 8 + ImGui::GetCursorPosY()));
         ImGui::SeparatorText("Plot Controls");
         ImGui::PushItemWidth(212);
-        ImGui::BeginGroup();
+        ImGui::BeginGroup(); // Left Group
         {
             switch (update_ymd.type) {
                 case 0:
                     ImGui::Text("Velocity:");
-                    ImGui::SliderFloat("##slider1", &update_ymd.v, 10, 30, "v = %.0f m/s");
+                    ImGui::SliderFloat("##slider1l", &update_ymd.v, 10, 30, "%.0f m/s");
                     break;
                 case 1:
                     ImGui::Text("Radius:");
-                    ImGui::SliderFloat("##slider1", &update_ymd.R, 10, 100, "R = %.0f m");
+                    ImGui::SliderFloat("##slider1l", &update_ymd.R, 10, 100, "%.0f m");
                     break;
                 case 2:
+                    ImGui::Text("Track:");
+                    HelpMarker("Whoops! Not working yet!");
                     break;
             }
-
-            //
-
+            ImGui::Text("Yaw Range:");
+            ImGui::SliderFloat("##slider2l", &update_ymd.yaw_range, 0, 15, "%.0f°");
+            ImGui::Text("Steer Range:");
+            ImGui::SliderFloat("##slider3l", &update_ymd.steer_range, 0, 25, "%.0f°");
         }
         ImGui::EndGroup();
         ImGui::SameLine();
-        ImGui::BeginGroup();
+        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), -3 + ImGui::GetCursorPosY()));
+        ImGui::BeginGroup(); // Right Group
         {
             ImGui::Text("Applied Torque:");
-            ImGui::SliderFloat("##slider2", &update_ymd.T, -1000, 800, "T = %.0f N.m");
+            ImGui::SliderFloat("##slider1r", &update_ymd.T, -1000, 800, "%.0f N.m");
+            ImGui::Text("Yaw Isolines:");
+            ImGui::SliderInt("##slider2r", &update_ymd.yaw_ct, 10, 100, "%i");
+            ImGui::Text("Steer Isolines:");
+            ImGui::SliderInt("##slider3r", &update_ymd.steer_ct, 10, 100, "%i");
         }
         ImGui::EndGroup();
-        //ImGui::SameLine();
-        //ImGui::SliderInt("##slider3", &update_ymd.yaw_ct, 10, 100, "yaw isolines = %i");
-        //ImGui::SameLine();
-        //ImGui::SliderInt("##slider4", &update_ymd.steer_ct, 10, 100, "steer isolines = %i");
-        //ImGui::SliderFloat("##slider5", &update_ymd.yaw_range, 0, 15, "yaw range = %.0f");
-        //ImGui::SameLine();
-        //ImGui::SliderFloat("##slider6", &update_ymd.steer_range, 0, 25, "steer range = %.0f");
-        //ImGui::SliderInt("##slider7", &update_ymd.refines, 5, 40, "refines = %i");
         ImGui::PopItemWidth();
         ImGui::Separator();
         ImGui::EndTabItem();
@@ -296,7 +307,12 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         // YMD
         static field<LogYmd> log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
         if (update_ymd.is_true) {
-            log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+            if (update_ymd.type == 0) {
+                log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+            }
+            else if (update_ymd.type == 1) {
+                log = VisualYmdCR(car, update_ymd.refines, update_ymd.R, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+            }
             update_ymd.is_true = false;
             //cout << "DEBUG SLIP:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).slip << endl;
             //cout << "DEBUG FXT:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).fxt << endl;
