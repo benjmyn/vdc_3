@@ -11,8 +11,6 @@ Vehicle::Vehicle() {
     // Loaded Values
     m = 285;
     izz = 150;
-    a = 0.8;
-    b = 0.7;
     cxa = 2.0;
     cza = -0.0;
     cpx = 0.1;
@@ -20,6 +18,8 @@ Vehicle::Vehicle() {
     cxe = {0, 0, 0, 0};
     cze = {0, 0, 0, 0};
     h = 0.300;
+    fwt = 0.465;
+    l = 1.536;
     tf = 1.194;
     tr = 1.194;
     zf = 0.089;
@@ -39,7 +39,8 @@ Vehicle::Vehicle() {
 
 
     // Calculated Values
-    l = a + b;
+    a = fwt * l;
+    b = (1 - fwt) * l;
     pos_whl.set_size(4);
     pos_whl(0) = {a, tf / 2};
     pos_whl(1) = {a, -tf / 2};
@@ -78,7 +79,12 @@ Vehicle::Vehicle() {
 }
 
 void Vehicle::LoadCalculatedAttributes() {
-    l = a + b;
+    a = fwt * l;
+    b = (1 - fwt) * l;
+    pos_whl(0) = {a, tf / 2};
+    pos_whl(1) = {a, -tf / 2};
+    pos_whl(2) = {-b, tr / 2};
+    pos_whl(3) = {-b, -tr / 2};
 }
 
 void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw, const double &steer, const double &R,
@@ -118,6 +124,7 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw
     // Convergence loop
     //const int ITER_TOTAL = floor(1500/pow(v,2) + 5);
     const int ITER_TOTAL = refines;
+    LoadCalculatedAttributes();
     for (int iter = 0; iter < ITER_TOTAL; ++iter) {
         // Update alignment
         roll = GetRoll(fy);
@@ -218,6 +225,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     // Convergence loop
     //const int ITER_TOTAL = floor(1500/pow(v,2) + 5);
     const int ITER_TOTAL = refines;
+    LoadCalculatedAttributes();
     for (int iter = 0; iter < ITER_TOTAL; ++iter) {
         // Update alignment
         roll = GetRoll(fy);

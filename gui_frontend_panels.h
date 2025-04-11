@@ -283,6 +283,13 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Vehicle")){
+        ImGui::SeparatorText("Mass Properties");
+        ImGui::PushItemWidth(169);
+        ImGui::InputDouble("Mass [kg]", &car.m, 1.0f, 10.0f, "%.1f");
+        ImGui::InputDouble("Inertia [kg.m2]", &car.izz, 1.0f, 10.0f, "%.1f");
+        ImGui::InputDouble("Center of Gravity Height [m]", &car.h, 0.001f, 0.01f, "%.4f");
+        ImGui::InputDouble("Front Weight [-]", &car.fwt, 0.001f, 0.01f, "%.3f");
+        ImGui::PopItemWidth();
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Tires")){
