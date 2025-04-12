@@ -283,12 +283,43 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Vehicle")){
+        ImGui::PushItemWidth(150);
         ImGui::SeparatorText("Mass Properties");
-        ImGui::PushItemWidth(169);
         ImGui::InputDouble("Mass [kg]", &car.m, 1.0f, 10.0f, "%.1f");
         ImGui::InputDouble("Inertia [kg.m2]", &car.izz, 1.0f, 10.0f, "%.1f");
         ImGui::InputDouble("Center of Gravity Height [m]", &car.h, 0.001f, 0.01f, "%.4f");
         ImGui::InputDouble("Front Weight [-]", &car.fwt, 0.001f, 0.01f, "%.3f");
+        //
+        ImGui::SeparatorText("Footprint");
+        ImGui::InputDouble("Wheelbase [m]", &car.l, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Front Track [m]", &car.tf, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Rear Track [m]", &car.tr, 0.001f, 0.01f, "%.3f");
+        //
+        ImGui::SeparatorText("Geometry");
+        ImGui::InputDouble("Front Roll Center Height [m]", &car.zf, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Rear Roll Center Height [m]", &car.zr, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Front Camber Gain [°/m]", &car.cam_gain_f, 1.0f, 10.0f, "%.1f");
+        ImGui::InputDouble("Rear Camber Gain [°/m]", &car.cam_gain_r, 1.0f, 10.0f, "%.1f");
+        ImGui::InputDouble("Front Toe Gain [°/m]", &car.toe_gain_f, 1.0f, 10.0f, "%.1f");
+        ImGui::InputDouble("Rear Toe Gain [°/m]", &car.toe_gain_r, 1.0f, 10.0f, "%.1f");
+        ImGui::InputDouble("Ackermann Rate [°/°]", &car.ack, 0.01f, 0.1f, "%.2f");
+        ImGui::InputDouble("Front Motion Ratio [-]", &car.mrsf, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Rear Motion Ratio [-]", &car.mrsr, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Front ARB Motion Ratio [-]", &car.mraf, 0.001f, 0.01f, "%.3f");
+        ImGui::InputDouble("Rear ARB Motion Ratio [-]", &car.mrar, 0.001f, 0.01f, "%.3f");
+        //
+        ImGui::SeparatorText("Alignment");
+        ImGui::InputDouble("Front Camber [°]", &car.camf, 0.1f, 1.0f, "%.1f");
+        ImGui::InputDouble("Rear Camber [°]", &car.camr, 0.1f, 1.0f, "%.1f");
+        ImGui::InputDouble("Front Toe [°]", &car.toef, 0.01f, 0.1f, "%.2f");
+        ImGui::InputDouble("Rear Toe [°]", &car.toer, 0.01f, 0.1f, "%.2f");
+        //
+        ImGui::SeparatorText("Springing");
+        ImGui::InputDouble("Front Spring [N/m]", &car.ksf, 100.0f, 1000.0f, "%.0f");
+        ImGui::InputDouble("Rear Spring [N/m]", &car.ksr, 100.0f, 1000.0f, "%.0f");
+        ImGui::InputDouble("Front ARB Stiffness [N/m]", &car.kaf, 100.0f, 1000.0f, "%.0f");
+        ImGui::InputDouble("Rear ARB Stiffness [N/m]", &car.kar, 100.0f, 1000.0f, "%.0f");
+        //
         ImGui::PopItemWidth();
         ImGui::EndTabItem();
     }
