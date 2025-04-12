@@ -8,6 +8,7 @@ public:
     // Static Alignment
     double camf, camr; // Static camber [deg]
     double toef, toer; // Static toe [deg]
+    double kingpin, caster, trail, scrub;
     // Dynamic Alignment (NEW)
     double ack; // Ackermann [deg/deg]
     double anti_lift, anti_dive, anti_squat; // Anti-effects [-]
@@ -87,7 +88,8 @@ public:
     vec AeroLoad(const double &fza, const double &mya);
     vec LongLoadTransfer(const vec &fx);
     vec LatLoadTransfer(const vec &fy, const double &pitch, const double &heave);
-    vec TotalLoad(const vec &fx, const vec &fy, const double &fza, const double &mya, const double &pitch, const double &heave);
+    vec SteerLoadTransfer(const double &steer);
+    vec TotalLoad(const vec &fx, const vec &fy, const double &fza, const double &mya, const double &steer, const double &pitch, const double &heave);
     // Update car orientation (car-frame)
     double GetRoll(const vec &fy, const double &heave);
     double GetPitch(const vec &fx); // ADD JACKING FORCES

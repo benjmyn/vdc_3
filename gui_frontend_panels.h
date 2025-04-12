@@ -64,57 +64,57 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                 //            );
                 ImGui::BeginTooltip();
                 ImGui::SeparatorText("Main Dynamics");
-                ImGui::BeginGroup();
                 {
+                    ImGui::BeginGroup();
                     ImGui::Text("v = %.1f m/s ", log(i, j).v);
                     ImGui::Text("R = %.0f m ", log(i, j).R);
                     ImGui::Text("ax = %.2f G ", log(i, j).ax/9.81);
                     ImGui::Text("ay = %.2f G ", log(i, j).ay/9.81);
                     ImGui::Text("aa = %.2f rad.s-2 ", log(i, j).aa);
+                    ImGui::EndGroup();
                 }
-                ImGui::EndGroup();
                 ImGui::SameLine();
-                ImGui::BeginGroup();
                 {
+                    ImGui::BeginGroup();
                     ImGui::Text("yaw = %+.1f° ", log(i, j).yaw);
                     ImGui::Text("steer = %+.1f° ", log(i, j).steer);
                     ImGui::Text("roll = %+.1f° ", log(i, j).roll);
                     ImGui::Text("pitch = %+.1f° ", log(i, j).pitch);
                     ImGui::Text("heave = %+.3f m ", log(i, j).heave);
+                    ImGui::EndGroup();
                 }
-                ImGui::EndGroup();
                 ImGui::SeparatorText("Alignment");
-                ImGui::BeginGroup();
                 {
+                    ImGui::BeginGroup();
                     ImGui::Text("cam = %+.2f° %+.2f° \n", log(i, j).cam(0), log(i, j).cam(1));
                     ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).cam(2), log(i, j).cam(3));
+                    ImGui::EndGroup();
                 }
-                ImGui::EndGroup();
                 ImGui::SameLine();
-                ImGui::BeginGroup();
                 {
+                    ImGui::BeginGroup();
                     ImGui::Text("toe = %+.2f° %+.2f° \n", log(i, j).toe(0), log(i, j).toe(1));
                     ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).toe(2), log(i, j).toe(3));
+                    ImGui::EndGroup();
                 }
-                ImGui::EndGroup();
                 ImGui::SeparatorText("Forces");
-                ImGui::BeginGroup();
                 {
+                    ImGui::BeginGroup();
                     ImGui::Text("fx = %+.0f N %+.0f N \n", log(i, j).fxt(0), log(i, j).fxt(1));
                     ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fxt(2), log(i, j).fxt(3));
-                    ImGui::Text("fz = %+.0f N %+.0f N \n", log(i, j).fz(0), log(i, j).fz(1));
-                    ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fz(2), log(i, j).fz(3));
+                    ImGui::Text("fz = %.0f N %.0f N \n", -log(i, j).fz(0), -log(i, j).fz(1));
+                    ImGui::Text("     %.0f N %.0f N \n", -log(i, j).fz(2), -log(i, j).fz(3));
+                    ImGui::EndGroup();
                 }
-                ImGui::EndGroup();
                 ImGui::SameLine();
-                ImGui::BeginGroup();
                 {
+                    ImGui::BeginGroup();
                     ImGui::Text("fy = %+.0f N %+.0f N \n", log(i, j).fyt(0), log(i, j).fyt(1));
                     ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fyt(2), log(i, j).fyt(3));
                     ImGui::Text("mz = %+.0f N.m %+.0f N.m \n", log(i, j).mz(0), log(i, j).mz(1));
                     ImGui::Text("     %+.0f N.m %+.0f N.m \n", log(i, j).mz(2), log(i, j).mz(3));
+                    ImGui::EndGroup();
                 }
-                ImGui::EndGroup();
                 ImGui::EndTooltip();
                 tipped_off = true;
             }
