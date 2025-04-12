@@ -60,7 +60,7 @@ Vehicle::Vehicle() {
     p94x = {0.0, -0.674, 3.44};
     p94xs = {0.53};
     p94y = {1.250, -0.14, 2.65, 2500.0, 611.0, 0.05, 1.03, -2.39, 0.0, 0.0, 0.100, 0.0, 0.0, 0.0, -22, 0.003, 0.030, 0.0};
-    p94ys = {0.53, 1.10};
+    p94ys = {0.53, 1.00};
 
     cout << "Initialized Vehicle" << endl;
 }
@@ -181,6 +181,7 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw
     log.heave = heave;
     log.v = v;
     log.slip = slip;
+    log.bump = GetBump(log.roll, log.pitch, log.heave);
     log.fxt = fxt;
     log.fyt = fyt;
     log.fz = fz;
@@ -283,6 +284,7 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     log.heave = heave;
     log.R = R;
     log.slip = slip;
+    log.bump = GetBump(log.roll, log.pitch, log.heave);
     log.fxt = fxt;
     log.fyt = fyt;
     log.fz = fz;

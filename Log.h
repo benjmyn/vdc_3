@@ -18,6 +18,7 @@ struct LogYmd {
     double pitch;
     double heave;
     vec slip;
+    vec bump;
     vec fxt;
     vec fyt;
     vec fz;

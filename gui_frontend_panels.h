@@ -80,7 +80,7 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                     ImGui::Text("steer = %+.2f° ", log(i, j).steer);
                     ImGui::Text("roll = %+.2f° ", log(i, j).roll);
                     ImGui::Text("pitch = %+.2f° ", log(i, j).pitch);
-                    ImGui::Text("heave = %+.3f m ", log(i, j).heave);
+                    ImGui::Text("heave = %+.0f mm ", 1e3 * log(i, j).heave);
                     ImGui::EndGroup();
                 }
                 ImGui::SeparatorText("Alignment");
@@ -88,6 +88,8 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                     ImGui::BeginGroup();
                     ImGui::Text("cam = %+.2f° %+.2f° \n", log(i, j).cam(0), log(i, j).cam(1));
                     ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).cam(2), log(i, j).cam(3));
+                    ImGui::Text("slip = %+.2f° %+.2f° \n", log(i, j).slip(0), log(i, j).slip(1));
+                    ImGui::Text("       %+.2f° %+.2f° \n", log(i, j).slip(2), log(i, j).slip(3));
                     ImGui::EndGroup();
                 }
                 ImGui::SameLine();
@@ -95,6 +97,8 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                     ImGui::BeginGroup();
                     ImGui::Text("toe = %+.2f° %+.2f° \n", log(i, j).toe(0), log(i, j).toe(1));
                     ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).toe(2), log(i, j).toe(3));
+                    ImGui::Text("disp = %+.0f mm %+.0f mm \n", 1e3 * log(i, j).bump(0), 1e3 * log(i, j).bump(1));
+                    ImGui::Text("       %+.0f mm %+.0f mm \n", 1e3 * log(i, j).bump(2), 1e3 * log(i, j).bump(3));
                     ImGui::EndGroup();
                 }
                 ImGui::SeparatorText("Forces");
