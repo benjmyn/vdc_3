@@ -14,11 +14,17 @@ struct LogYmd {
     double v;
     double R;
     double T;
+    double roll;
+    double pitch;
+    double heave;
     vec slip;
     vec fxt;
     vec fyt;
     vec fz;
+    vec mz;
     vec Tw;
+    vec cam;
+    vec toe;
     uvec fxflags;
 };
 struct LogLts {

@@ -89,8 +89,8 @@ public:
     vec LatLoadTransfer(const vec &fy, const double &pitch, const double &heave);
     vec TotalLoad(const vec &fx, const vec &fy, const double &fza, const double &mya, const double &pitch, const double &heave);
     // Update car orientation (car-frame)
-    double GetRoll(const vec &fy);
-    double GetPitch(const vec &fx, const double &mya); // ADD JACKING FORCES
+    double GetRoll(const vec &fy, const double &heave);
+    double GetPitch(const vec &fx); // ADD JACKING FORCES
     double GetHeave(const vec &fz); // ADD JACKING FORCES
     // Update alignment (tire-frame)
     // NEED TO ADD COMPLIANCE!!!!!!!!

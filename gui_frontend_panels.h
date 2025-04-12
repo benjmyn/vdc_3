@@ -32,34 +32,91 @@ struct UpdateYmd {
     int refines = 10;
 };
 inline void PlotYmdTooltip(const field<LogYmd> &log) {
+    bool tipped_off = false;
     for (int i = 0; i < log.n_rows; ++i) {
         for (int j = 0; j < log.n_cols; ++j) {
             ImVec2 point_pos = ImPlot::PlotToPixels(ImPlotPoint(log(i, j).ay, log(i, j).aa));
             ImVec2 mouse_pos = ImPlot::PlotToPixels(ImPlot::GetPlotMousePos());
             double dx = mouse_pos.x - point_pos.x;
             double dy = mouse_pos.y - point_pos.y;
-            if (sqrt(dx*dx+dy*dy) < 5) {
-                ImGui::SetTooltip(
-                        "v = %.0f m/s\nR = %.0f m\n"
-                            "ax = %.2f G\nay = %.2f G\naa = %.2f rad.s-2\n"
-                            "slip = \n %+.1f° %+.1f°\n %+.1f° %+.1f°\n"
-                            "Tw = \n %+.0f %+.0f N.m\n %+.0f %+.0f N.m\n"
-                            //"fx = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                            //"fy = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                            //"fz = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                            "yaw = %.1f°\n"
-                            "steer = %.1f°\n",
-                            //"fxflags =\n %u %u\n %u %u",
-                            log(i, j).v, log(i,j).R,
-                            log(i, j).ax / 9.81, log(i,j).ay / 9.81, log(i,j).aa,
-                            log(i, j).slip(0), log(i, j).slip(1), log(i, j).slip(2), log(i, j).slip(3),
-                            log(i, j).Tw(0), log(i, j).Tw(1), log(i, j).Tw(2), log(i, j).Tw(3),
-                            //log(i, j).fxt(0), log(i, j).fxt(1), log(i, j).fxt(2), log(i, j).fxt(3),
-                            //log(i, j).fyt(0), log(i, j).fyt(1), log(i, j).fyt(2), log(i, j).fyt(3),
-                            //log(i, j).fz(0), log(i, j).fz(1), log(i, j).fz(2), log(i, j).fz(3),
-                            log(i,j).yaw, log(i, j).steer
-                            //log(i, j).fxflags(0), log(i, j).fxflags(1), log(i, j).fxflags(2), log(i, j).fxflags(3)
-                            );
+            if (!tipped_off && sqrt(dx*dx+dy*dy) < 5) {
+                //ImGui::SetTooltip("v = %.0f m/s\nR = %+.0f m\n"
+                //            "ax = %+.2f G\nay = %+.2f G\naa = %+.2f rad.s-2\n"
+                //            "roll = %+.1f°\npitch = %+.1f°\nheave = %+.3f m\n"
+                //            "slip = \n %+.1f° %+.1f°\n %+.1f° %+.1f°\n"
+                //            "Tw = \n %+.0f %+.0f N.m\n %+.0f %+.0f N.m\n"
+                //            //"fx = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
+                //            //"fy = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
+                //            "fz = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
+                //            "yaw = %+.1f°\n"
+                //            "steer = %+.1f°\n",
+                //            //"fxflags =\n %u %u\n %u %u",
+                //            log(i, j).v, log(i,j).R,
+                //            log(i, j).ax / 9.81, log(i,j).ay / 9.81, log(i,j).aa,
+                //            log(i, j).roll, log(i,j).pitch, log(i, j).heave,
+                //            log(i, j).slip(0), log(i, j).slip(1), log(i, j).slip(2), log(i, j).slip(3),
+                //            log(i, j).Tw(0), log(i, j).Tw(1), log(i, j).Tw(2), log(i, j).Tw(3),
+                //            //log(i, j).fxt(0), log(i, j).fxt(1), log(i, j).fxt(2), log(i, j).fxt(3),
+                //            //log(i, j).fyt(0), log(i, j).fyt(1), log(i, j).fyt(2), log(i, j).fyt(3),
+                //            log(i, j).fz(0), log(i, j).fz(1), log(i, j).fz(2), log(i, j).fz(3),
+                //            log(i,j).yaw, log(i, j).steer
+                //            //log(i, j).fxflags(0), log(i, j).fxflags(1), log(i, j).fxflags(2), log(i, j).fxflags(3)
+                //            );
+                ImGui::BeginTooltip();
+                ImGui::SeparatorText("Main Dynamics");
+                ImGui::BeginGroup();
+                {
+                    ImGui::Text("v = %.1f m/s ", log(i, j).v);
+                    ImGui::Text("R = %.0f m ", log(i, j).R);
+                    ImGui::Text("ax = %.2f G ", log(i, j).ax/9.81);
+                    ImGui::Text("ay = %.2f G ", log(i, j).ay/9.81);
+                    ImGui::Text("aa = %.2f rad.s-2 ", log(i, j).aa);
+                }
+                ImGui::EndGroup();
+                ImGui::SameLine();
+                ImGui::BeginGroup();
+                {
+                    ImGui::Text("yaw = %+.1f° ", log(i, j).yaw);
+                    ImGui::Text("steer = %+.1f° ", log(i, j).steer);
+                    ImGui::Text("roll = %+.1f° ", log(i, j).roll);
+                    ImGui::Text("pitch = %+.1f° ", log(i, j).pitch);
+                    ImGui::Text("heave = %+.3f m ", log(i, j).heave);
+                }
+                ImGui::EndGroup();
+                ImGui::SeparatorText("Alignment");
+                ImGui::BeginGroup();
+                {
+                    ImGui::Text("cam = %+.2f° %+.2f° \n", log(i, j).cam(0), log(i, j).cam(1));
+                    ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).cam(2), log(i, j).cam(3));
+                }
+                ImGui::EndGroup();
+                ImGui::SameLine();
+                ImGui::BeginGroup();
+                {
+                    ImGui::Text("toe = %+.2f° %+.2f° \n", log(i, j).toe(0), log(i, j).toe(1));
+                    ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).toe(2), log(i, j).toe(3));
+                }
+                ImGui::EndGroup();
+                ImGui::SeparatorText("Forces");
+                ImGui::BeginGroup();
+                {
+                    ImGui::Text("fx = %+.0f N %+.0f N \n", log(i, j).fxt(0), log(i, j).fxt(1));
+                    ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fxt(2), log(i, j).fxt(3));
+                    ImGui::Text("fz = %+.0f N %+.0f N \n", log(i, j).fz(0), log(i, j).fz(1));
+                    ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fz(2), log(i, j).fz(3));
+                }
+                ImGui::EndGroup();
+                ImGui::SameLine();
+                ImGui::BeginGroup();
+                {
+                    ImGui::Text("fy = %+.0f N %+.0f N \n", log(i, j).fyt(0), log(i, j).fyt(1));
+                    ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fyt(2), log(i, j).fyt(3));
+                    ImGui::Text("mz = %+.0f N.m %+.0f N.m \n", log(i, j).mz(0), log(i, j).mz(1));
+                    ImGui::Text("     %+.0f N.m %+.0f N.m \n", log(i, j).mz(2), log(i, j).mz(3));
+                }
+                ImGui::EndGroup();
+                ImGui::EndTooltip();
+                tipped_off = true;
             }
         }
     }

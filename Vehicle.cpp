@@ -30,8 +30,8 @@ Vehicle::Vehicle() {
     mrsf = 1.0;
     mrsr = 1.0;
     // Load alignment
-    camf = 0;
-    camr = 0;
+    camf = -2;
+    camr = -1;
     toef = -0.5;
     toer = 0.4;
     // Load springing
@@ -42,7 +42,7 @@ Vehicle::Vehicle() {
     kpf = 125000;
     kpr = 125000;
     // Load static aero
-    cxa = 2.0;
+    cxa = 0.7;
     cza = -0.0;
     cpx = 0.1;
     cpz = 0.1;
@@ -58,7 +58,6 @@ Vehicle::Vehicle() {
     p94y = {1.250, -0.14, 2.65, 2500.0, 611.0, 0.05, 1.03, -2.39, 0.0, 0.0, 0.100, 0.0, 0.0, 0.0, -22, 0.003, 0.030, 0.0};
     p94ys = {0.53, 1.10};
 
-    // Heave & roll stiffnesses
     cout << "Initialized Vehicle" << endl;
 }
 
@@ -124,8 +123,8 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw
     LoadCalculatedAttributes();
     for (int iter = 0; iter < ITER_TOTAL; ++iter) {
         // Update alignment
-        roll = GetRoll(fy);
-        pitch = GetPitch(fz, mya);
+        roll = GetRoll(fy, heave);
+        pitch = GetPitch(fz);
         heave = GetHeave(fz);
         inc = GetInclination(steer, roll, pitch, heave);
         str = GetSteer(steer, roll, pitch, heave);
@@ -174,6 +173,9 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw
     log.aa = aa;
     log.ax = ax;
     log.ay = ay;
+    log.roll = roll;
+    log.pitch = pitch;
+    log.heave = heave;
     log.v = v;
     log.slip = slip;
     log.fxt = fxt;
@@ -225,8 +227,8 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     LoadCalculatedAttributes();
     for (int iter = 0; iter < ITER_TOTAL; ++iter) {
         // Update alignment
-        roll = GetRoll(fy);
-        pitch = GetPitch(fz, mya);
+        roll = GetRoll(fy, heave);
+        pitch = GetPitch(fz);
         heave = GetHeave(fz);
         inc = GetInclination(steer, roll, pitch, heave);
         str = GetSteer(steer, roll, pitch, heave);
@@ -274,14 +276,20 @@ void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &ya
     log.aa = aa;
     log.ax = ax;
     log.ay = ay;
+    log.roll = roll;
+    log.pitch = pitch;
+    log.heave = heave;
     log.R = R;
     log.slip = slip;
     log.fxt = fxt;
     log.fyt = fyt;
     log.fz = fz;
+    log.mz = mz;
     log.Tw = Tw;
     log.yaw = yaw;
     log.steer = steer;
+    log.cam = inc % vec({-1, 1, -1, 1}); // i think
+    log.toe = str % vec({-1, 1, -1, 1});
     log.fxflags = fxflags;
 }
 
@@ -417,7 +425,7 @@ vec Vehicle::TireFy(const vec &fxt, const vec &slip, const vec &fz, const vec &i
     return fyt;
 }
 
-vec Vehicle::TireMz(const vec &slip, const vec &fz, const vec &inc, const vec &fyt) {
+vec Vehicle::TireMz/**/(const vec &slip, const vec &fz, const vec &inc, const vec &fyt) {
     return vec({0, 0, 0, 0}); // Placeholder!!!
 }
 
@@ -476,20 +484,22 @@ vec Vehicle::TotalLoad(const vec &fx, const vec &fy, const double &fza, const do
     return StaticLoad() + AeroLoad(fza, mya) + LongLoadTransfer(fx) + LatLoadTransfer(fy, pitch, heave);
 }
 
-double Vehicle::GetRoll(const vec &fy) {
+double Vehicle::GetRoll(const vec &fy, const double &heave) {
     // moment over angular roll stiffness
-
-    return 0;
+    return sum(fy) * (h + heave) / kr * 57.3;
 }
 
-double Vehicle::GetPitch(const vec &fz, const double &mya) {
+double Vehicle::GetPitch(const vec &fz) {
     // Difference between axle heaves over wheelbase (SAA)
-    return 0;
+    vec fzs = StaticLoad();
+    double dhf = (fz(0) + fz(1) - fzs(0) - fzs(1)) / khf;
+    double dhr = (fz(2) + fz(3) - fzs(2) - fzs(3)) / khr;
+    return (dhr - dhf) / l * 57.3;
 }
 
 double Vehicle::GetHeave(const vec &fz) {
     // (fz - fzs) / combined stiffness
-    return 0;
+    return sum(fz - StaticLoad()) / kh;
 }
 
 vec Vehicle::GetBump(const double &roll, const double &pitch, const double &heave) {
