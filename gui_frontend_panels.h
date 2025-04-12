@@ -76,10 +76,10 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                 ImGui::SameLine();
                 {
                     ImGui::BeginGroup();
-                    ImGui::Text("yaw = %+.1f° ", log(i, j).yaw);
-                    ImGui::Text("steer = %+.1f° ", log(i, j).steer);
-                    ImGui::Text("roll = %+.1f° ", log(i, j).roll);
-                    ImGui::Text("pitch = %+.1f° ", log(i, j).pitch);
+                    ImGui::Text("yaw = %+.2f° ", log(i, j).yaw);
+                    ImGui::Text("steer = %+.2f° ", log(i, j).steer);
+                    ImGui::Text("roll = %+.2f° ", log(i, j).roll);
+                    ImGui::Text("pitch = %+.2f° ", log(i, j).pitch);
                     ImGui::Text("heave = %+.3f m ", log(i, j).heave);
                     ImGui::EndGroup();
                 }
