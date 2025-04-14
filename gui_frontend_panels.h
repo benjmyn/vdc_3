@@ -68,8 +68,8 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                     ImGui::BeginGroup();
                     ImGui::Text("v = %.1f m/s ", log(i, j).v);
                     ImGui::Text("R = %.0f m ", log(i, j).R);
-                    ImGui::Text("ax = %.2f G ", log(i, j).ax/9.81);
-                    ImGui::Text("ay = %.2f G ", log(i, j).ay/9.81);
+                    ImGui::Text("ax = %.3f G ", log(i, j).ax/9.81);
+                    ImGui::Text("ay = %.3f G ", log(i, j).ay/9.81);
                     ImGui::Text("aa = %.2f rad.s-2 ", log(i, j).aa);
                     ImGui::EndGroup();
                 }
@@ -104,8 +104,8 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
                 ImGui::SeparatorText("Forces");
                 {
                     ImGui::BeginGroup();
-                    ImGui::Text("fx = %+.0f N %+.0f N \n", log(i, j).fxt(0), log(i, j).fxt(1));
-                    ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fxt(2), log(i, j).fxt(3));
+                    ImGui::Text("Tw = %+3.0f N.m %+3.0f N.m \n", log(i, j).Tw(0), log(i, j).Tw(1));
+                    ImGui::Text("     %+3.0f N.m %+3.0f N.m \n", log(i, j).Tw(2), log(i, j).Tw(3));
                     ImGui::Text("fz = %.0f N %.0f N \n", -log(i, j).fz(0), -log(i, j).fz(1));
                     ImGui::Text("     %.0f N %.0f N \n", -log(i, j).fz(2), -log(i, j).fz(3));
                     ImGui::EndGroup();
@@ -344,6 +344,7 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Vehicle")){
+        ImGui::BeginChild("Scroll Zone", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 50), false);
         ImGui::PushItemWidth(150);
         ImGui::SeparatorText("Mass Properties");
         ImGui::InputDouble("Mass [kg]", &car.m, 1.0f, 10.0f, "%.1f");
@@ -382,6 +383,16 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::InputDouble("Rear ARB Stiffness [N/m]", &car.kar, 100.0f, 1000.0f, "%.0f");
         //
         ImGui::PopItemWidth();
+        ImGui::EndChild();
+        // JUST the generate button jesus this is a lot of code for one thing
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0.65, 0, 1));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0.80, 0, 1));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0.7, 0, 1));
+        ImGui::SetCursorPos(ImVec2(140,ImGui::GetCursorPosY() + 5));
+        if (ImGui::Button("Generate Data")){update_ymd.is_true = true;}
+        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar();
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Tires")){

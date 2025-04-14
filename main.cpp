@@ -20,18 +20,21 @@ using namespace arma;
 
 int main() {
     Vehicle Car;
+    double pressure = 69;
+    Car.LoadTiresLat("/home/benjmyn/Codelite/VDC/data/B2356run11.dat", pressure);
+    cout << Car.fydata(0,0) << endl;
     //Car.LoadCalculatedAttributes();
     //cout << Car.SteerLoadTransfer(0) << endl;
     //cout << Car.SteerLoadTransfer(10) << endl;
-    StartWindow();
-    while (!glfwWindowShouldClose(graphicsWindow)){
-        NewFrame();
-            static UpdateYmd update_ymd;
-            LeftPanel(Car, update_ymd);
-            RightPanel(Car, update_ymd);
-        RenderFrame();
-    }
-    EndWindow();
+    //StartWindow();
+    //while (!glfwWindowShouldClose(graphicsWindow)){
+    //    NewFrame();
+    //        static UpdateYmd update_ymd;
+    //        LeftPanel(Car, update_ymd);
+    //        RightPanel(Car, update_ymd);
+    //    RenderFrame();
+    //}
+    //EndWindow();
 
     return 0;
 }

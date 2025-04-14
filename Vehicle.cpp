@@ -64,7 +64,48 @@ Vehicle::Vehicle() {
 
     cout << "Initialized Vehicle" << endl;
 }
+void Vehicle::LoadTiresLat(string filepath, double &pressure) { // FY and MZ
+    vec pressure_range = {0.95 * pressure, 1.05 * pressure};
+    ifstream datFile;
+    datFile.open(filepath);
+    if (!datFile.is_open()){
+        cerr << "Tire data didn't load properly, try specifying a full filepath!" << endl;
+    }
+    // Skip file header
+	string head;
+	getline(datFile, head);
+	getline(datFile, head);
+	getline(datFile, head);
+    // Clean mixed delimiters from data
+	stringstream cleanData;
+	string line;
+	while (getline(datFile, line)) {
+		for (char &ch : line) {
+			if (ch == '\t') ch = ' '; // Replace tabs with spaces
+		}
+		if (!line.empty()) {
+			cleanData << line << '\n';
+		}
+	}
+    // Trim data by columns
+	mat body;
+	body.load(cleanData, raw_ascii);
+	uvec extractedColsFy = {3, 4, 7, 9, 10};
+	uvec extractedColsMz = {3, 4, 7, 12, 10};
+	mat bodyFy = body.cols(extractedColsFy);
+    mat bodyMz = body.cols(extractedColsMz);
 
+	// Trim data by rows (by pressure), store in Vehicle attribute
+	uvec indices = find((bodyFy.col(2) >= pressure_range(0)) % (bodyFy.col(2) <= pressure_range(1)));
+	fydata = bodyFy.rows(indices);
+    mzdata = bodyMz.rows(indices);
+
+	// Close .dat file
+	datFile.close();
+}
+void Vehicle::LoadTiresLong(string filepath, double &pressure) {
+
+}
 void Vehicle::LoadCalculatedAttributes() {
     // Footprint
     a = fwt * l;

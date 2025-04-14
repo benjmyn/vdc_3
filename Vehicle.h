@@ -5,6 +5,14 @@
 
 class Vehicle {
 public:
+    // Tire Data
+    mat fxdata;
+    mat fydata;
+    mat mzdata;
+    // Tires
+    vec p94x, p94xs;
+    vec p94y, p94ys;
+    vec p94z, p94zs;
     // Static Alignment
     double camf, camr; // Static camber [deg]
     double toef, toer; // Static toe [deg]
@@ -41,8 +49,7 @@ public:
     double cxa, cza;
     vec cxe, cze;
     double cpx, cpz;
-    // Tires
-    vec p94x, p94y, p94z, p94xs, p94ys, p94zs;
+
 
     // Calculated Attributes
     double a, b; // Front and rear axle to CG lengths [m]
@@ -55,7 +62,8 @@ public:
     Vehicle();
     // Load base parameters from files then calculate leftovers
     void LoadSuspension();
-    void LoadTires();
+    void LoadTiresLat(string filepath, double &pressure);
+    void LoadTiresLong(string filepath, double &pressure);
     void LoadAero();
     void LoadPowertrain();
     void LoadCalculatedAttributes();
