@@ -24,6 +24,7 @@ Vehicle::Vehicle() {
     cam_gain_r = 70;
     toe_gain_f = 0;
     toe_gain_r = 0;
+    steer_ratio = 5.50;
     ack = 0.1;
     trail = 0.0102;
     caster = 2.5;
@@ -63,6 +64,27 @@ Vehicle::Vehicle() {
     p94ys = {0.53, 1.00};
 
     cout << "Initialized Vehicle" << endl;
+}
+void Vehicle::LoadCalculatedAttributes() {
+    // Footprint
+    a = fwt * l;
+    b = (1 - fwt) * l;
+    pos_whl.set_size(4);
+    pos_whl(0) = {a, tf / 2};
+    pos_whl(1) = {a, -tf / 2};
+    pos_whl(2) = {-b, tr / 2};
+    pos_whl(3) = {-b, -tr / 2};
+    // Springing
+    krsf = (pow(mrsf, -2) * ksf + pow(mraf, -2) * kaf) * pow(tf, 2) / 2;
+    krsr = (pow(mrsr, -2) * ksr + pow(mrar, -2) * kar) * pow(tr, 2) / 2;
+    krpf = kpf * pow(tf, 2) / 2;
+    krpr = kpr * pow(tr, 2) / 2;
+    khf = (pow(mrsf, -2) * ksf * kpf) / (pow(mrsf, -2) * ksf + kpf);
+    khr = (pow(mrsr, -2) * ksr * kpr) / (pow(mrsr, -2) * ksr + kpr);
+    kh = khf + khr;
+    krf = (krsf * krpf) / (krsf + krpf);
+    krr = (krsr * krpr) / (krsr + krpr);
+    kr = krf + krr;
 }
 void Vehicle::LoadTiresLat(string filepath, double &pressure) { // FY and MZ
     vec pressure_range = {0.95 * pressure, 1.05 * pressure};
@@ -105,27 +127,6 @@ void Vehicle::LoadTiresLat(string filepath, double &pressure) { // FY and MZ
 }
 void Vehicle::LoadTiresLong(string filepath, double &pressure) {
 
-}
-void Vehicle::LoadCalculatedAttributes() {
-    // Footprint
-    a = fwt * l;
-    b = (1 - fwt) * l;
-    pos_whl.set_size(4);
-    pos_whl(0) = {a, tf / 2};
-    pos_whl(1) = {a, -tf / 2};
-    pos_whl(2) = {-b, tr / 2};
-    pos_whl(3) = {-b, -tr / 2};
-    // Springing
-    krsf = (pow(mrsf, -2) * ksf + pow(mraf, -2) * kaf) * pow(tf, 2) / 2;
-    krsr = (pow(mrsr, -2) * ksr + pow(mrar, -2) * kar) * pow(tr, 2) / 2;
-    krpf = kpf * pow(tf, 2) / 2;
-    krpr = kpr * pow(tr, 2) / 2;
-    khf = (pow(mrsf, -2) * ksf * kpf) / (pow(mrsf, -2) * ksf + kpf);
-    khr = (pow(mrsr, -2) * ksr * kpr) / (pow(mrsr, -2) * ksr + kpr);
-    kh = khf + khr;
-    krf = (krsf * krpf) / (krsf + krpf);
-    krr = (krsr * krpr) / (krsr + krpr);
-    kr = krf + krr;
 }
 void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw, const double &steer, const double &R,
                               const double &T) {
@@ -504,7 +505,7 @@ vec Vehicle::LatLoadTransfer(const vec &fy, const double &pitch, const double &h
 }
 vec Vehicle::SteerLoadTransfer(const double &steer) {
     double esj = (trail * kingpin - scrub * caster) / 57.3;
-    double rost = 2 * esj * (steer / 57.3) / tf;
+    double rost = 2 * esj * (steer / steer_ratio / 57.3) / tf;
     vec dz = {rost * kr, -rost * kr, -rost * kr, rost * kr};
     return dz;
 }
@@ -544,11 +545,13 @@ vec Vehicle::GetInclination(const double &steer, const double &roll, const doubl
     return inc_bump + inc_steer + inc_comp + roll;
 }
 vec Vehicle::GetSteer(const double &steer, const double &roll, const double &pitch, const double &heave) {
+    // Change steering angle to rack rather than wheel
+    double steer_rack = steer / steer_ratio;
     // Get steering angles using bump steer (minimal but worth having), ackermann
     vec bump = GetBump(roll, pitch, heave);
     vec str_steer = {
-        steer * (1 + ack / 2 * sign(steer)),
-        steer * (1 - ack / 2 * sign(steer)),
+        steer_rack * (1 + ack / 2 * sign(steer_rack)),
+        steer_rack * (1 - ack / 2 * sign(steer_rack)),
         0,
         0
     };

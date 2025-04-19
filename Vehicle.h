@@ -18,7 +18,8 @@ public:
     double toef, toer; // Static toe [deg]
     double kingpin, caster, trail, scrub;
     // Dynamic Alignment (NEW)
-    double ack; // Ackermann [deg/deg]
+    double ack; // Ackermann ratio [deg/deg]
+    double steer_ratio; // Steering ratio [deg/deg]
     double anti_lift, anti_dive, anti_squat; // Anti-effects [-]
     double cam_gain_f, cam_gain_r; // Camber gain in heave [deg/m]
     double toe_gain_f, toe_gain_r; // Toe gain in heave [deg/m]

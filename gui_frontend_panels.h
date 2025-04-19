@@ -26,7 +26,7 @@ struct UpdateYmd {
     float R = 100;
     float T = 0;
     float yaw_range = 6;
-    float steer_range = 10;
+    float steer_range = 60;
     int yaw_ct = 55;
     int steer_ct = 55;
     int refines = 10;
@@ -253,8 +253,8 @@ inline void SubplotsTireFy(Vehicle &car) { // Passes tire data through the Vehic
     // Setup variables
     vec camber = {0, 2, 4};
     vec load = {-222, -445, -667, -889, -1112};
-    Col<string> loadLabel = {"50lb","100lb","150lb","200lb","250lb"};
-    Col<string> camberLabel = {"0°","-2°","-4°"};
+    //Col<string> loadLabel = {"50lb","100lb","150lb","200lb","250lb"};
+    //Col<string> camberLabel = {"0°","-2°","-4°"};
     static Vehicle car_theo;
     car_theo.p94y = car.p94y;
     car_theo.p94ys = vec({1, 1});
@@ -348,7 +348,7 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
             ImGui::Text("Yaw Range:");
             ImGui::SliderFloat("##slider2l", &update_ymd.yaw_range, 0, 15, "%.0f°");
             ImGui::Text("Steer Range:");
-            ImGui::SliderFloat("##slider3l", &update_ymd.steer_range, 0, 25, "%.0f°");
+            ImGui::SliderFloat("##slider3l", &update_ymd.steer_range, 0, 130, "%.0f°");
         }
         ImGui::EndGroup();
         ImGui::SameLine();
