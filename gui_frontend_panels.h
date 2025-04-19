@@ -266,151 +266,159 @@ inline void SubplotsTireMz(Vehicle &car) {
 }
 // Left panel content
 inline void InterfaceYmd(Vehicle &car, UpdateYmd &update_ymd) {
-// Title card itself
-        const static string titlecard =
-                        "     ___________   ____  ___  _____  _____  \n"
-                        "    / __/ __/ _ | / __/__| | / / _ \\/ ___/ \n"
-                        "   / _/_\\ \\/ __ |/ __/___| |/ / // / /__  \n"
-                        "  /_/ /___/_/ |_|___/    |___/____/\\___/   \n"
-                        "\n"
-                        "  Formula SAE Vehicle Dynamics Collection  \n"
-                        "       by Ben Mynhier | VTMotorsports      \n";
-        ImGui::Text("\n\n%s\n", titlecard.c_str());
-        // Change color theme
-        static bool lm = false;
-        if (lm){
-            ImGui::SetCursorPos(ImVec2(177, ImGui::GetCursorPosY()));
-            if (ImGui::Button("Dark Mode")) {
-                lm = false;
-            }
-            ImGui::StyleColorsCustomLight();
-            ImPlot::StyleColorsLight();
+    // Title card itself
+    const static string titlecard =
+                    "     ___________   ____  ___  _____  _____  \n"
+                    "    / __/ __/ _ | / __/__| | / / _ \\/ ___/ \n"
+                    "   / _/_\\ \\/ __ |/ __/___| |/ / // / /__  \n"
+                    "  /_/ /___/_/ |_|___/    |___/____/\\___/   \n"
+                    "\n"
+                    "  Formula SAE Vehicle Dynamics Collection  \n"
+                    "       by Ben Mynhier | VTMotorsports      \n";
+    ImGui::Text("\n\n%s\n", titlecard.c_str());
+    // Change color theme
+    static bool lm = false;
+    if (lm){
+        ImGui::SetCursorPos(ImVec2(177, ImGui::GetCursorPosY()));
+        if (ImGui::Button("Dark Mode")) {
+            lm = false;
         }
-        else if (!lm){
-            ImGui::SetCursorPos(ImVec2(170, ImGui::GetCursorPosY()));
-            if (ImGui::Button("Light Mode")) {
-                lm = true;
-            }
-            ImGui::StyleColorsCustomDark();
-            ImPlot::StyleColorsDark();
+        ImGui::StyleColorsCustomLight();
+        ImPlot::StyleColorsLight();
+    }
+    else if (!lm){
+        ImGui::SetCursorPos(ImVec2(170, ImGui::GetCursorPosY()));
+        if (ImGui::Button("Light Mode")) {
+            lm = true;
         }
-        ImGui::NewLine();
-        ImGui::Separator();
-        // Toggleable modes
-        ImGui::SetCursorPos(ImVec2(32 + ImGui::GetCursorPosX(), 12 + ImGui::GetCursorPosY()));
-        ImGui::BeginGroup();
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::RadioButton("Const. Velocity", &update_ymd.type_ymd, 0);
-        ImGui::RadioButton("Const. Radius", &update_ymd.type_ymd, 1);
-        ImGui::RadioButton("Lap Time Sim", &update_ymd.type_ymd, 2);
-        ImGui::PopStyleVar();
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        // Generate button
-        ImGui::BeginGroup();
-        ImGui::SetCursorPos(ImVec2(48 + ImGui::GetCursorPosX(), 0 + ImGui::GetCursorPosY()));
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
-        if (ImGui::Button("Generate\n  Data")){update_ymd.is_true = true;}
-        ImGui::PopStyleVar();
-        ImGui::EndGroup();
+        ImGui::StyleColorsCustomDark();
+        ImPlot::StyleColorsDark();
+    }
+    ImGui::NewLine();
+    ImGui::Separator();
+    // Toggleable modes
+    ImGui::SetCursorPos(ImVec2(32 + ImGui::GetCursorPosX(), 12 + ImGui::GetCursorPosY()));
+    ImGui::BeginGroup();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+    ImGui::RadioButton("Const. Velocity", &update_ymd.type_ymd, 0);
+    ImGui::RadioButton("Const. Radius", &update_ymd.type_ymd, 1);
+    ImGui::RadioButton("Lap Time Sim", &update_ymd.type_ymd, 2);
+    ImGui::PopStyleVar();
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    // Generate button
+    ImGui::BeginGroup();
+    ImGui::SetCursorPos(ImVec2(48 + ImGui::GetCursorPosX(), 0 + ImGui::GetCursorPosY()));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
+    if (ImGui::Button("Generate\n  Data")){update_ymd.is_true = true;}
+    ImGui::PopStyleVar();
+    ImGui::EndGroup();
 
-        // Put specifics here
-        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), 8 + ImGui::GetCursorPosY()));
-        ImGui::SeparatorText("Plot Controls");
-        ImGui::PushItemWidth(212);
-        ImGui::BeginGroup(); // Left Group
-        {
-            switch (update_ymd.type_ymd) {
-                case 0:
-                    ImGui::Text("Velocity:");
-                    ImGui::SliderFloat("##slider1l", &update_ymd.v, 10, 30, "%.0f m/s");
-                    break;
-                case 1:
-                    ImGui::Text("Radius:");
-                    ImGui::SliderFloat("##slider1l", &update_ymd.R, 10, 100, "%.0f m");
-                    break;
-                case 2:
-                    ImGui::Text("Track:");
-                    HelpMarker("Whoops! Not working yet!");
-                    break;
-            }
-            ImGui::Text("Yaw Range:");
-            ImGui::SliderFloat("##slider2l", &update_ymd.yaw_range, 0, 15, "%.0f°");
-            ImGui::Text("Steer Range:");
-            ImGui::SliderFloat("##slider3l", &update_ymd.steer_range, 0, 130, "%.0f°");
+    // Put specifics here
+    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), 8 + ImGui::GetCursorPosY()));
+    ImGui::SeparatorText("Plot Controls");
+    ImGui::PushItemWidth(212);
+    ImGui::BeginGroup(); // Left Group
+    {
+        switch (update_ymd.type_ymd) {
+            case 0:
+                ImGui::Text("Velocity:");
+                ImGui::SliderFloat("##slider1l", &update_ymd.v, 10, 30, "%.0f m/s");
+                break;
+            case 1:
+                ImGui::Text("Radius:");
+                ImGui::SliderFloat("##slider1l", &update_ymd.R, 10, 100, "%.0f m");
+                break;
+            case 2:
+                ImGui::Text("Track:");
+                HelpMarker("Whoops! Not working yet!");
+                break;
         }
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), -3 + ImGui::GetCursorPosY()));
-        ImGui::BeginGroup(); // Right Group
-        {
-            ImGui::Text("Applied Torque:");
-            ImGui::SliderFloat("##slider1r", &update_ymd.T, -1000, 800, "%.0f N.m");
-            ImGui::Text("Yaw Isolines:");
-            ImGui::SliderInt("##slider2r", &update_ymd.yaw_ct, 10, 100, "%i");
-            ImGui::Text("Steer Isolines:");
-            ImGui::SliderInt("##slider3r", &update_ymd.steer_ct, 10, 100, "%i");
-        }
-        ImGui::EndGroup();
-        ImGui::PopItemWidth();
-        ImGui::Separator();
+        ImGui::Text("Yaw Range:");
+        ImGui::SliderFloat("##slider2l", &update_ymd.yaw_range, 0, 15, "%.0f°");
+        ImGui::Text("Steer Range:");
+        ImGui::SliderFloat("##slider3l", &update_ymd.steer_range, 0, 130, "%.0f°");
+    }
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), -3 + ImGui::GetCursorPosY()));
+    ImGui::BeginGroup(); // Right Group
+    {
+        ImGui::Text("Applied Torque:");
+        ImGui::SliderFloat("##slider1r", &update_ymd.T, -1000, 800, "%.0f N.m");
+        ImGui::Text("Yaw Isolines:");
+        ImGui::SliderInt("##slider2r", &update_ymd.yaw_ct, 10, 100, "%i");
+        ImGui::Text("Steer Isolines:");
+        ImGui::SliderInt("##slider3r", &update_ymd.steer_ct, 10, 100, "%i");
+    }
+    ImGui::EndGroup();
+    ImGui::PopItemWidth();
+    ImGui::Separator();
 }
 inline void InterfaceCar(Vehicle &car, UpdateYmd &update_ymd) {
-        ImGui::BeginChild("Scroll Zone", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 50), false);
-        ImGui::PushItemWidth(150);
-        ImGui::SeparatorText("Mass Properties");
-        ImGui::InputDouble("Mass [kg]", &car.m, 1.0f, 10.0f, "%.1f");
-        ImGui::InputDouble("Inertia [kg.m2]", &car.izz, 1.0f, 10.0f, "%.1f");
-        ImGui::InputDouble("Center of Gravity Height [m]", &car.h, 0.001f, 0.01f, "%.4f");
-        ImGui::InputDouble("Front Weight [-]", &car.fwt, 0.001f, 0.01f, "%.3f");
-        //
-        ImGui::SeparatorText("Footprint");
-        ImGui::InputDouble("Wheelbase [m]", &car.l, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Front Track [m]", &car.tf, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Rear Track [m]", &car.tr, 0.001f, 0.01f, "%.3f");
-        //
-        ImGui::SeparatorText("Geometry");
-        ImGui::InputDouble("Front Roll Center Height [m]", &car.zf, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Rear Roll Center Height [m]", &car.zr, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Front Camber Gain [°/m]", &car.cam_gain_f, 1.0f, 10.0f, "%.1f");
-        ImGui::InputDouble("Rear Camber Gain [°/m]", &car.cam_gain_r, 1.0f, 10.0f, "%.1f");
-        ImGui::InputDouble("Front Toe Gain [°/m]", &car.toe_gain_f, 1.0f, 10.0f, "%.1f");
-        ImGui::InputDouble("Rear Toe Gain [°/m]", &car.toe_gain_r, 1.0f, 10.0f, "%.1f");
-        ImGui::InputDouble("Ackermann Rate [°/°]", &car.ack, 0.01f, 0.1f, "%.2f");
-        ImGui::InputDouble("Front Motion Ratio [-]", &car.mrsf, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Rear Motion Ratio [-]", &car.mrsr, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Front ARB Motion Ratio [-]", &car.mraf, 0.001f, 0.01f, "%.3f");
-        ImGui::InputDouble("Rear ARB Motion Ratio [-]", &car.mrar, 0.001f, 0.01f, "%.3f");
-        //
-        ImGui::SeparatorText("Alignment");
-        ImGui::InputDouble("Front Camber [°]", &car.camf, 0.1f, 1.0f, "%.1f");
-        ImGui::InputDouble("Rear Camber [°]", &car.camr, 0.1f, 1.0f, "%.1f");
-        ImGui::InputDouble("Front Toe [°]", &car.toef, 0.01f, 0.1f, "%.2f");
-        ImGui::InputDouble("Rear Toe [°]", &car.toer, 0.01f, 0.1f, "%.2f");
-        //
-        ImGui::SeparatorText("Springing");
-        ImGui::InputDouble("Front Spring [N/m]", &car.ksf, 100.0f, 1000.0f, "%.0f");
-        ImGui::InputDouble("Rear Spring [N/m]", &car.ksr, 100.0f, 1000.0f, "%.0f");
-        ImGui::InputDouble("Front ARB Stiffness [N/m]", &car.kaf, 100.0f, 1000.0f, "%.0f");
-        ImGui::InputDouble("Rear ARB Stiffness [N/m]", &car.kar, 100.0f, 1000.0f, "%.0f");
-        //
-        ImGui::PopItemWidth();
-        ImGui::EndChild();
-        // JUST the generate button jesus this is a lot of code for one thing
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0.65, 0, 1));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0.80, 0, 1));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0.7, 0, 1));
-        ImGui::SetCursorPos(ImVec2(140,ImGui::GetCursorPosY() + 5));
-        if (ImGui::Button("Generate Data")){update_ymd.is_true = true;}
-        ImGui::PopStyleColor(3);
-        ImGui::PopStyleVar();
+    ImGui::BeginChild("Scroll Zone", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 50), false);
+    ImGui::PushItemWidth(150);
+    ImGui::SeparatorText("Mass Properties");
+    ImGui::InputDouble("Mass [kg]", &car.m, 1.0f, 10.0f, "%.1f");
+    ImGui::InputDouble("Inertia [kg.m2]", &car.izz, 1.0f, 10.0f, "%.1f");
+    ImGui::InputDouble("Center of Gravity Height [m]", &car.h, 0.001f, 0.01f, "%.4f");
+    ImGui::InputDouble("Front Weight [-]", &car.fwt, 0.001f, 0.01f, "%.3f");
+    //
+    ImGui::SeparatorText("Footprint");
+    ImGui::InputDouble("Wheelbase [m]", &car.l, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Front Track [m]", &car.tf, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Rear Track [m]", &car.tr, 0.001f, 0.01f, "%.3f");
+    //
+    ImGui::SeparatorText("Geometry");
+    ImGui::InputDouble("Front Roll Center Height [m]", &car.zf, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Rear Roll Center Height [m]", &car.zr, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Front Camber Gain [°/m]", &car.cam_gain_f, 1.0f, 10.0f, "%.1f");
+    ImGui::InputDouble("Rear Camber Gain [°/m]", &car.cam_gain_r, 1.0f, 10.0f, "%.1f");
+    ImGui::InputDouble("Front Toe Gain [°/m]", &car.toe_gain_f, 1.0f, 10.0f, "%.1f");
+    ImGui::InputDouble("Rear Toe Gain [°/m]", &car.toe_gain_r, 1.0f, 10.0f, "%.1f");
+    ImGui::InputDouble("Ackermann Rate [°/°]", &car.ack, 0.01f, 0.1f, "%.2f");
+    ImGui::InputDouble("Front Motion Ratio [-]", &car.mrsf, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Rear Motion Ratio [-]", &car.mrsr, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Front ARB Motion Ratio [-]", &car.mraf, 0.001f, 0.01f, "%.3f");
+    ImGui::InputDouble("Rear ARB Motion Ratio [-]", &car.mrar, 0.001f, 0.01f, "%.3f");
+    //
+    ImGui::SeparatorText("Alignment");
+    ImGui::InputDouble("Front Camber [°]", &car.camf, 0.1f, 1.0f, "%.1f");
+    ImGui::InputDouble("Rear Camber [°]", &car.camr, 0.1f, 1.0f, "%.1f");
+    ImGui::InputDouble("Front Toe [°]", &car.toef, 0.01f, 0.1f, "%.2f");
+    ImGui::InputDouble("Rear Toe [°]", &car.toer, 0.01f, 0.1f, "%.2f");
+    //
+    ImGui::SeparatorText("Springing");
+    ImGui::InputDouble("Front Spring [N/m]", &car.ksf, 100.0f, 1000.0f, "%.0f");
+    ImGui::InputDouble("Rear Spring [N/m]", &car.ksr, 100.0f, 1000.0f, "%.0f");
+    ImGui::InputDouble("Front ARB Stiffness [N/m]", &car.kaf, 100.0f, 1000.0f, "%.0f");
+    ImGui::InputDouble("Rear ARB Stiffness [N/m]", &car.kar, 100.0f, 1000.0f, "%.0f");
+    //
+    ImGui::PopItemWidth();
+    ImGui::EndChild();
+    // JUST the generate button jesus this is a lot of code for one thing
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 12));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0.65, 0, 1));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0.80, 0, 1));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0.7, 0, 1));
+    ImGui::SetCursorPos(ImVec2(140,ImGui::GetCursorPosY() + 5));
+    if (ImGui::Button("Generate Data")){update_ymd.is_true = true;}
+    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar();
 }
 inline void InterfaceTire(Vehicle &car, UpdateYmd &update_ymd) {
 
 }
 inline void InterfaceTv(Vehicle &car, UpdateYmd &update_ymd) {
-
+    ImGui::BeginChild("Scroll Zone", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 50), false);
+    ImGui::PushItemWidth(150);
+    ImGui::SeparatorText("Motor Limits");
+    ImGui::Checkbox("Enable Torque Vectoring", &car.tv_enabled);
+    ImGui::SeparatorText("Motor Control Parameters");
+    ImGui::InputDouble("Steer Effect (Front) [Nm/deg]", &car.dTf_str, 0.1f, 1.0f, "%.1f");
+    ImGui::InputDouble("Steer Effect (Rear) [Nm/deg]", &car.dTr_str, 0.1f, 1.0f, "%.1f");
+    ImGui::PopItemWidth();
+    ImGui::EndChild();
 }
 // Right panel content
 inline void TabYmd(Vehicle &car, UpdateYmd &update_ymd) {

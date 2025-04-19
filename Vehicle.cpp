@@ -57,6 +57,15 @@ Vehicle::Vehicle() {
     Re = 0.200;
     fpb = 0.65;
     fpt = 0.00;
+    // Load torque vectoring
+    tv_enabled = true;
+    trq_upper_limit = 200;
+    trq_lower_limit = 0;
+    dTf_str = 0;
+    dTr_str = 0;
+    dTf_yaw = 0;
+    dTr_yaw = 0;
+    dfpt_str = 0;
     // Load tires
     p94x = {0.0, -0.674, 3.44};
     p94xs = {0.53};
@@ -128,8 +137,7 @@ void Vehicle::LoadTiresLat(string filepath, double &pressure) { // FY and MZ
 void Vehicle::LoadTiresLong(string filepath, double &pressure) {
 
 }
-void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw, const double &steer, const double &R,
-                              const double &T) {
+void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw, const double &steer, const double &R, const double &T) {
     // Reset local variables
     double v = 20; // Initial guess velocity (is this optimal??)
     double v_old = v;
@@ -232,8 +240,7 @@ void Vehicle::RadiusYawMoment(LogYmd &log, const int &refines, const double &yaw
     log.steer = steer;
     log.fxflags = fxflags;
 }
-void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &yaw, const double &steer, const double &v,
-                                const double &T) {
+void Vehicle::VelocityYawMoment(LogYmd &log, const int refines, const double &yaw, const double &steer, const double &v, const double &T) {
     // Reset local variables
     double R = 1000; // Initial guess radius (is this optimal??)
     double R_old = R;
@@ -382,14 +389,34 @@ vec Vehicle::GetSlip(const double &yaw, const vec &str, const double &R) {
     return beta_i + 57.3 * vec({0, 0, b / R, b / R}) - str;
 }
 vec Vehicle::GetTorque(const double &T, const double &R, const double &yaw, const double &steer, const double &v) {
-    vec Tv;
-    if (T > 0) {
-        double c_lat_f = 0;
-        double c_lat_r = 0;
-        double c_long = 1 - fpt * 2;
-        double Tf = T * (1 - c_long) / 2;
-        double Tr = T - Tf;
-        Tv = {Tf * (1 - c_lat_f) / 2, Tf * (1 + c_lat_f) / 2, Tr * (1 - c_lat_r) / 2, Tr * (1 + c_lat_r) / 2};
+    vec Tv(4);
+    if (T >= 0 && tv_enabled) {
+        // Distribute torque by axle
+        Tv(0) = (fpt + dfpt_str * steer) / 2 * T;
+        Tv(1) = (fpt + dfpt_str * steer) / 2 * T;
+        Tv(2) = (1 - fpt - dfpt_str * steer) / 2 * T;
+        Tv(3) = (1 - fpt - dfpt_str * steer) / 2 * T;
+        // Apply lateral shift
+        Tv(0) += -dTf_str/2 * steer + -dTf_yaw/2 * yaw;
+        Tv(1) += dTf_str/2 * steer + dTf_yaw/2 * yaw;
+        Tv(2) += -dTr_str/2 * steer + -dTr_yaw/2 * yaw;
+        Tv(3) += dTr_str/2 * steer + dTr_yaw/2 * yaw;
+        // Double-check if any motors are out-of-limits
+        for (int i = 0; i < 4; ++i) {
+            if (Tv(i) > trq_upper_limit) {
+                Tv(i) = trq_upper_limit;
+            } else if (Tv(i) < trq_lower_limit) {
+                Tv(i) = trq_lower_limit;
+            }
+            else {
+                // Motor torque OK
+            }
+        }
+    } else if (T >= 0 && !tv_enabled) {
+        Tv(0) = fpt * T / 2;
+        Tv(0) = fpt * T / 2;
+        Tv(0) = (1 - fpt) * T / 2;
+        Tv(0) = (1 - fpt) * T / 2;
     } else {
         Tv = {fpb * T / 2, fpb * T / 2, (1 - fpb) * T / 2, (1 - fpb) * T / 2};
     }
@@ -460,14 +487,12 @@ vec Vehicle::TireFy(const vec &fxt, const vec &slip, const vec &fz, const vec &i
 vec Vehicle::TireMz/**/(const vec &slip, const vec &fz, const vec &inc, const vec &fyt) {
     return vec({0, 0, 0, 0}); // Placeholder!!!
 }
-double Vehicle::AeroFx(const double &v, const double &yaw, const double &roll, const double &pitch,
-                       const double &heave) {
+double Vehicle::AeroFx(const double &v, const double &yaw, const double &roll, const double &pitch, const double &heave) {
     // Drag equation
     double ex = 1; //prod(1 - cxe % vec({yaw, roll, pitch, heave}));
     return -0.5 * 1.225 * ex * cxa * pow(v, 2);
 }
-double Vehicle::AeroFz(const double &v, const double &yaw, const double &roll, const double &pitch,
-                       const double &heave) {
+double Vehicle::AeroFz(const double &v, const double &yaw, const double &roll, const double &pitch, const double &heave) {
     // Downforce equation
     double ez = prod(1 - cze % vec({yaw, roll, pitch, heave}));
     return 0.5 * 1.225 * ez * cza * pow(v, 2);
@@ -509,8 +534,7 @@ vec Vehicle::SteerLoadTransfer(const double &steer) {
     vec dz = {rost * kr, -rost * kr, -rost * kr, rost * kr};
     return dz;
 }
-vec Vehicle::TotalLoad(const vec &fx, const vec &fy, const double &fza, const double &mya, const double &steer,
-                        const double &pitch, const double &heave) {
+vec Vehicle::TotalLoad(const vec &fx, const vec &fy, const double &fza, const double &mya, const double &steer, const double &pitch, const double &heave) {
     return StaticLoad() + AeroLoad(fza, mya) + LongLoadTransfer(fx) + LatLoadTransfer(fy, pitch, heave) + SteerLoadTransfer(steer);
 }
 double Vehicle::GetRoll(const vec &fy, const double &heave) {

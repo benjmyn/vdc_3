@@ -46,6 +46,13 @@ public:
     double crr; // Rolling resistance [N/N]
     double Re; // Effective radius [m]
     double fpt; // Static front torque [-]
+    // Torque vectoring
+    bool tv_enabled; // For comparison use
+    double trq_upper_limit; // (after gearing)
+    double trq_lower_limit; // (after gearing, throttle only)
+    double dTf_str, dTr_str; // Torque difference from steer (Nm/deg) - linear for now
+    double dTf_yaw, dTr_yaw; // Torque difference from yaw (Nm/deg) - linear for now
+    double dfpt_str; // Frontward torque bias with steer (-/deg) - linear for now
     // Aerodynamics
     double cxa, cza;
     vec cxe, cze;
