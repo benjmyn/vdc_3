@@ -20,7 +20,8 @@ static void HelpMarker(const char* desc)
 }
 struct UpdateYmd {
     bool is_true = false;
-    int type = 0; // 0: const V, 1: const R, 2: LTS
+    int type_ymd = 0; // 0: const V, 1: const R, 2: LTS
+    int type_tire = 1; // 0: Fx, 1: Fy, 2: Mz
     // Needs floats for sliders
     float v = 20;
     float R = 100;
@@ -31,6 +32,67 @@ struct UpdateYmd {
     int steer_ct = 55;
     int refines = 10;
 };
+// YMD plots
+inline void YmdTooltip(const LogYmd &log) {
+    ImGui::BeginTooltip();
+    ImGui::SeparatorText("Main Dynamics");
+    {
+        ImGui::BeginGroup();
+        ImGui::Text("v = %.1f m/s ", log.v);
+        ImGui::Text("R = %.2f m ", log.R);
+        ImGui::Text("ax = %.3f G ", log.ax/9.81);
+        ImGui::Text("ay = %.3f G ", log.ay/9.81);
+        ImGui::Text("aa = %.2f rad.s-2 ", log.aa);
+        ImGui::EndGroup();
+    }
+    ImGui::SameLine();
+    {
+        ImGui::BeginGroup();
+        ImGui::Text("yaw = %+.2f° ", log.yaw);
+        ImGui::Text("steer = %+.2f° ", log.steer);
+        ImGui::Text("roll = %+.2f° ", log.roll);
+        ImGui::Text("pitch = %+.2f° ", log.pitch);
+        ImGui::Text("heave = %+.0f mm ", 1e3 * log.heave);
+        ImGui::EndGroup();
+    }
+    ImGui::SeparatorText("Alignment");
+    {
+        ImGui::BeginGroup();
+        ImGui::Text("cam = %+.2f° %+.2f° \n", log.cam(0), log.cam(1));
+        ImGui::Text("      %+.2f° %+.2f° \n", log.cam(2), log.cam(3));
+        ImGui::Text("slip = %+.2f° %+.2f° \n", log.slip(0), log.slip(1));
+        ImGui::Text("       %+.2f° %+.2f° \n", log.slip(2), log.slip(3));
+        ImGui::EndGroup();
+    }
+    ImGui::SameLine();
+    {
+        ImGui::BeginGroup();
+        ImGui::Text("toe = %+.2f° %+.2f° \n", log.toe(0), log.toe(1));
+        ImGui::Text("      %+.2f° %+.2f° \n", log.toe(2), log.toe(3));
+        ImGui::Text("disp = %+.0f mm %+.0f mm \n", 1e3 * log.bump(0), 1e3 * log.bump(1));
+        ImGui::Text("       %+.0f mm %+.0f mm \n", 1e3 * log.bump(2), 1e3 * log.bump(3));
+        ImGui::EndGroup();
+    }
+    ImGui::SeparatorText("Forces");
+    {
+        ImGui::BeginGroup();
+        ImGui::Text("Tw = %+3.0f N.m %+3.0f N.m \n", log.Tw(0), log.Tw(1));
+        ImGui::Text("     %+3.0f N.m %+3.0f N.m \n", log.Tw(2), log.Tw(3));
+        ImGui::Text("fz = %.0f N %.0f N \n", -log.fz(0), -log.fz(1));
+        ImGui::Text("     %.0f N %.0f N \n", -log.fz(2), -log.fz(3));
+        ImGui::EndGroup();
+    }
+    ImGui::SameLine();
+    {
+        ImGui::BeginGroup();
+        ImGui::Text("fy = %+.0f N %+.0f N \n", log.fyt(0), log.fyt(1));
+        ImGui::Text("     %+.0f N %+.0f N \n", log.fyt(2), log.fyt(3));
+        ImGui::Text("mz = %+.0f N.m %+.0f N.m \n", log.mz(0), log.mz(1));
+        ImGui::Text("     %+.0f N.m %+.0f N.m \n", log.mz(2), log.mz(3));
+        ImGui::EndGroup();
+    }
+    ImGui::EndTooltip();
+}
 inline void PlotYmdTooltip(const field<LogYmd> &log) {
     bool tipped_off = false;
     for (int i = 0; i < log.n_rows; ++i) {
@@ -40,86 +102,7 @@ inline void PlotYmdTooltip(const field<LogYmd> &log) {
             double dx = mouse_pos.x - point_pos.x;
             double dy = mouse_pos.y - point_pos.y;
             if (!tipped_off && sqrt(dx*dx+dy*dy) < 5) {
-                //ImGui::SetTooltip("v = %.0f m/s\nR = %+.0f m\n"
-                //            "ax = %+.2f G\nay = %+.2f G\naa = %+.2f rad.s-2\n"
-                //            "roll = %+.1f°\npitch = %+.1f°\nheave = %+.3f m\n"
-                //            "slip = \n %+.1f° %+.1f°\n %+.1f° %+.1f°\n"
-                //            "Tw = \n %+.0f %+.0f N.m\n %+.0f %+.0f N.m\n"
-                //            //"fx = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                //            //"fy = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                //            "fz = \n %+.0f %+.0f [N]\n %+.0f %+.0f [N]\n"
-                //            "yaw = %+.1f°\n"
-                //            "steer = %+.1f°\n",
-                //            //"fxflags =\n %u %u\n %u %u",
-                //            log(i, j).v, log(i,j).R,
-                //            log(i, j).ax / 9.81, log(i,j).ay / 9.81, log(i,j).aa,
-                //            log(i, j).roll, log(i,j).pitch, log(i, j).heave,
-                //            log(i, j).slip(0), log(i, j).slip(1), log(i, j).slip(2), log(i, j).slip(3),
-                //            log(i, j).Tw(0), log(i, j).Tw(1), log(i, j).Tw(2), log(i, j).Tw(3),
-                //            //log(i, j).fxt(0), log(i, j).fxt(1), log(i, j).fxt(2), log(i, j).fxt(3),
-                //            //log(i, j).fyt(0), log(i, j).fyt(1), log(i, j).fyt(2), log(i, j).fyt(3),
-                //            log(i, j).fz(0), log(i, j).fz(1), log(i, j).fz(2), log(i, j).fz(3),
-                //            log(i,j).yaw, log(i, j).steer
-                //            //log(i, j).fxflags(0), log(i, j).fxflags(1), log(i, j).fxflags(2), log(i, j).fxflags(3)
-                //            );
-                ImGui::BeginTooltip();
-                ImGui::SeparatorText("Main Dynamics");
-                {
-                    ImGui::BeginGroup();
-                    ImGui::Text("v = %.1f m/s ", log(i, j).v);
-                    ImGui::Text("R = %.0f m ", log(i, j).R);
-                    ImGui::Text("ax = %.3f G ", log(i, j).ax/9.81);
-                    ImGui::Text("ay = %.3f G ", log(i, j).ay/9.81);
-                    ImGui::Text("aa = %.2f rad.s-2 ", log(i, j).aa);
-                    ImGui::EndGroup();
-                }
-                ImGui::SameLine();
-                {
-                    ImGui::BeginGroup();
-                    ImGui::Text("yaw = %+.2f° ", log(i, j).yaw);
-                    ImGui::Text("steer = %+.2f° ", log(i, j).steer);
-                    ImGui::Text("roll = %+.2f° ", log(i, j).roll);
-                    ImGui::Text("pitch = %+.2f° ", log(i, j).pitch);
-                    ImGui::Text("heave = %+.0f mm ", 1e3 * log(i, j).heave);
-                    ImGui::EndGroup();
-                }
-                ImGui::SeparatorText("Alignment");
-                {
-                    ImGui::BeginGroup();
-                    ImGui::Text("cam = %+.2f° %+.2f° \n", log(i, j).cam(0), log(i, j).cam(1));
-                    ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).cam(2), log(i, j).cam(3));
-                    ImGui::Text("slip = %+.2f° %+.2f° \n", log(i, j).slip(0), log(i, j).slip(1));
-                    ImGui::Text("       %+.2f° %+.2f° \n", log(i, j).slip(2), log(i, j).slip(3));
-                    ImGui::EndGroup();
-                }
-                ImGui::SameLine();
-                {
-                    ImGui::BeginGroup();
-                    ImGui::Text("toe = %+.2f° %+.2f° \n", log(i, j).toe(0), log(i, j).toe(1));
-                    ImGui::Text("      %+.2f° %+.2f° \n", log(i, j).toe(2), log(i, j).toe(3));
-                    ImGui::Text("disp = %+.0f mm %+.0f mm \n", 1e3 * log(i, j).bump(0), 1e3 * log(i, j).bump(1));
-                    ImGui::Text("       %+.0f mm %+.0f mm \n", 1e3 * log(i, j).bump(2), 1e3 * log(i, j).bump(3));
-                    ImGui::EndGroup();
-                }
-                ImGui::SeparatorText("Forces");
-                {
-                    ImGui::BeginGroup();
-                    ImGui::Text("Tw = %+3.0f N.m %+3.0f N.m \n", log(i, j).Tw(0), log(i, j).Tw(1));
-                    ImGui::Text("     %+3.0f N.m %+3.0f N.m \n", log(i, j).Tw(2), log(i, j).Tw(3));
-                    ImGui::Text("fz = %.0f N %.0f N \n", -log(i, j).fz(0), -log(i, j).fz(1));
-                    ImGui::Text("     %.0f N %.0f N \n", -log(i, j).fz(2), -log(i, j).fz(3));
-                    ImGui::EndGroup();
-                }
-                ImGui::SameLine();
-                {
-                    ImGui::BeginGroup();
-                    ImGui::Text("fy = %+.0f N %+.0f N \n", log(i, j).fyt(0), log(i, j).fyt(1));
-                    ImGui::Text("     %+.0f N %+.0f N \n", log(i, j).fyt(2), log(i, j).fyt(3));
-                    ImGui::Text("mz = %+.0f N.m %+.0f N.m \n", log(i, j).mz(0), log(i, j).mz(1));
-                    ImGui::Text("     %+.0f N.m %+.0f N.m \n", log(i, j).mz(2), log(i, j).mz(3));
-                    ImGui::EndGroup();
-                }
-                ImGui::EndTooltip();
+                YmdTooltip(log(i,j));
                 tipped_off = true;
             }
         }
@@ -161,6 +144,7 @@ inline void PlotYmdLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start, 
         ImPlot::PopStyleColor();
     }
 }
+// Stability plots
 inline void PlotStabLines(const field<LogYmd> &log, const ImVec4 &col_steer_start, const ImVec4 &col_steer_end) {
     ImVec4 color; // Constant steer
     float rat;
@@ -249,6 +233,10 @@ inline void PlotSteerLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start
         ImPlot::PopStyleColor();
     }
 }
+// Tire plots
+inline void SubplotsTireFx(Vehicle &car) {
+
+}
 inline void SubplotsTireFy(Vehicle &car) { // Passes tire data through the Vehicle object
     // Setup variables
     vec camber = {0, 2, 4};
@@ -273,11 +261,12 @@ inline void SubplotsTireFy(Vehicle &car) { // Passes tire data through the Vehic
     ImPlot::EndSubplots();
     ImGui::EndChild();
 }
-inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
-    ImGui::BeginChild("Left Panel", ImVec2(450, ImGui::GetContentRegionAvail().y), true);
-    ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
-    if(ImGui::BeginTabItem("Plot Controls")){
-        // Title card itself
+inline void SubplotsTireMz(Vehicle &car) {
+
+}
+// Left panel content
+inline void InterfaceYmd(Vehicle &car, UpdateYmd &update_ymd) {
+// Title card itself
         const static string titlecard =
                         "     ___________   ____  ___  _____  _____  \n"
                         "    / __/ __/ _ | / __/__| | / / _ \\/ ___/ \n"
@@ -311,9 +300,9 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::SetCursorPos(ImVec2(32 + ImGui::GetCursorPosX(), 12 + ImGui::GetCursorPosY()));
         ImGui::BeginGroup();
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::RadioButton("Const. Velocity", &update_ymd.type, 0);
-        ImGui::RadioButton("Const. Radius", &update_ymd.type, 1);
-        ImGui::RadioButton("Lap Time Sim", &update_ymd.type, 2);
+        ImGui::RadioButton("Const. Velocity", &update_ymd.type_ymd, 0);
+        ImGui::RadioButton("Const. Radius", &update_ymd.type_ymd, 1);
+        ImGui::RadioButton("Lap Time Sim", &update_ymd.type_ymd, 2);
         ImGui::PopStyleVar();
         ImGui::EndGroup();
         ImGui::SameLine();
@@ -331,7 +320,7 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::PushItemWidth(212);
         ImGui::BeginGroup(); // Left Group
         {
-            switch (update_ymd.type) {
+            switch (update_ymd.type_ymd) {
                 case 0:
                     ImGui::Text("Velocity:");
                     ImGui::SliderFloat("##slider1l", &update_ymd.v, 10, 30, "%.0f m/s");
@@ -365,9 +354,8 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::EndGroup();
         ImGui::PopItemWidth();
         ImGui::Separator();
-        ImGui::EndTabItem();
-    }
-    if(ImGui::BeginTabItem("Vehicle")){
+}
+inline void InterfaceCar(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::BeginChild("Scroll Zone", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 50), false);
         ImGui::PushItemWidth(150);
         ImGui::SeparatorText("Mass Properties");
@@ -417,49 +405,39 @@ inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
         if (ImGui::Button("Generate Data")){update_ymd.is_true = true;}
         ImGui::PopStyleColor(3);
         ImGui::PopStyleVar();
-        ImGui::EndTabItem();
-    }
-    if(ImGui::BeginTabItem("Tires")){
-        ImGui::EndTabItem();
-    }
-    if(ImGui::BeginTabItem("Motor Control")){
-        ImGui::EndTabItem();
-    }
-    ImGui::EndTabBar();
-    ImGui::EndChild();
-    ImGui::SameLine();
 }
-inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
-    ImGui::BeginChild("Right Panel", ImGui::GetContentRegionAvail(), true);
-    ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
-    if(ImGui::BeginTabItem("Yaw Moment Diagram")){
-        ImPlot::BeginPlot("Yaw Moment Diagram", ImGui::GetContentRegionAvail());
-        ImPlot::SetupAxis(ImAxis_X1, "Lateral Accel (m.s-2)", ImPlotAxisFlags_None);
-        ImPlot::SetupAxisLimits(ImAxis_X1, -20.0, 20.0, ImGuiCond_FirstUseEver);
-        ImPlot::SetupAxis(ImAxis_Y1, "Yaw Accel (rad.s-2)", ImPlotAxisFlags_None);
-        ImPlot::SetupAxisLimits(ImAxis_Y1, -25.0, 25.0, ImGuiCond_FirstUseEver);
-        // YMD
-        static field<LogYmd> log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
-        if (update_ymd.is_true) {
-            if (update_ymd.type == 0) {
-                log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
-            }
-            else if (update_ymd.type == 1) {
-                log = VisualYmdCR(car, update_ymd.refines, update_ymd.R, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
-            }
-            update_ymd.is_true = false;
-            //cout << "DEBUG SLIP:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).slip << endl;
-            //cout << "DEBUG FXT:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).fxt << endl;
-            //cout << "DEBUG FYT:\n" << log(floor(update_ymd.yaw_range/2), floor(update_ymd.yaw_range/2)+1).fyt << endl;
+inline void InterfaceTire(Vehicle &car, UpdateYmd &update_ymd) {
+
+}
+inline void InterfaceTv(Vehicle &car, UpdateYmd &update_ymd) {
+
+}
+// Right panel content
+inline void TabYmd(Vehicle &car, UpdateYmd &update_ymd) {
+    ImPlot::BeginPlot("Yaw Moment Diagram", ImGui::GetContentRegionAvail());
+    // Setup limits to initialize at consistent given values, but
+    ImPlot::SetupAxis(ImAxis_X1, "Lateral Accel (m.s-2)", ImPlotAxisFlags_None);
+    ImPlot::SetupAxisLimits(ImAxis_X1, -20.0, 20.0, ImGuiCond_FirstUseEver);
+    ImPlot::SetupAxis(ImAxis_Y1, "Yaw Accel (rad.s-2)", ImPlotAxisFlags_None);
+    ImPlot::SetupAxisLimits(ImAxis_Y1, -25.0, 25.0, ImGuiCond_FirstUseEver);
+    // YMD
+    static field<LogYmd> log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+    if (update_ymd.is_true) {
+        if (update_ymd.type_ymd == 0) {
+            log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
         }
-        // YMD
-        PlotYmdLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1),
-                            ImVec4(0, 0, 1, 1), ImVec4(0, 1, 0.5, 1));
-        PlotYmdTooltip(log);
-        ImPlot::EndPlot();
-        ImGui::EndTabItem();
+        else if (update_ymd.type_ymd == 1) {
+            log = VisualYmdCR(car, update_ymd.refines, update_ymd.R, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
+        }
+        update_ymd.is_true = false;
     }
-    if(ImGui::BeginTabItem("Stability/Control")){
+    // YMD
+    PlotYmdLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1),
+                        ImVec4(0, 0, 1, 1), ImVec4(0, 1, 0.5, 1));
+    PlotYmdTooltip(log);
+    ImPlot::EndPlot();
+}
+inline void TabStab(Vehicle &car, UpdateYmd &update_ymd) {
         static field<LogYmd> log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
         if (update_ymd.is_true) {
             log = VisualYmdCV(car, update_ymd.refines, update_ymd.v, update_ymd.T, update_ymd.yaw_range, update_ymd.steer_range, update_ymd.yaw_ct, update_ymd.steer_ct);
@@ -498,10 +476,62 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         PlotContLines(log, ImVec4(1, 0, 0, 1), ImVec4(0.5, 1, 0, 1));
         ImPlot::EndPlot();
         ImPlot::EndSubplots();
+}
+inline void TabTire(Vehicle &car, UpdateYmd &update_ymd) {
+    switch (update_ymd.type_tire) {
+        case 0:
+            SubplotsTireFx(car);
+        break;
+        case 1:
+            SubplotsTireFy(car);
+        break;
+        case 2:
+            SubplotsTireMz(car);
+        break;
+        default:
+            break;
+    }
+}
+inline void TabLts(Vehicle &car, UpdateYmd &update_ymd) {
+
+}
+// Front-end panel areas
+inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
+    ImGui::BeginChild("Left Panel", ImVec2(450, ImGui::GetContentRegionAvail().y), true);
+    ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
+    if(ImGui::BeginTabItem("YMD Plot")){ // Control isolines and dynamic situation
+        InterfaceYmd(car, update_ymd);
+        ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Vehicle")){ // For car tuning purposes
+        InterfaceCar(car, update_ymd);
+        ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Tires")){ // For tire fitting purposes
+        InterfaceTire(car, update_ymd);
+        ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Motor Control")){ // For torque vectoring purposes
+        InterfaceTv(car, update_ymd);
+        ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+    ImGui::EndChild();
+    ImGui::SameLine(); // Horizontal panel layout
+}
+inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
+    ImGui::BeginChild("Right Panel", ImGui::GetContentRegionAvail(), true);
+    ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
+    if(ImGui::BeginTabItem("Yaw Moment Diagram")){
+        TabYmd(car, update_ymd);
+        ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Stability/Control")){
+        TabStab(car, update_ymd);
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Tire Fitter")){
-        SubplotsTireFy(car);
+        TabTire(car, update_ymd);
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Lap Time Simulation")){
