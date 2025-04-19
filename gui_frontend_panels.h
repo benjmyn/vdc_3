@@ -249,6 +249,30 @@ inline void PlotSteerLines(const field<LogYmd> &log, const ImVec4 &col_yaw_start
         ImPlot::PopStyleColor();
     }
 }
+inline void SubplotsTireFy(Vehicle &car) { // Passes tire data through the Vehicle object
+    // Setup variables
+    vec camber = {0, 2, 4};
+    vec load = {-222, -445, -667, -889, -1112};
+    Col<string> loadLabel = {"50lb","100lb","150lb","200lb","250lb"};
+    Col<string> camberLabel = {"0°","-2°","-4°"};
+    static Vehicle car_theo;
+    car_theo.p94y = car.p94y;
+    car_theo.p94ys = vec({1, 1});
+    // Plots
+    ImVec2 subplots_area = ImVec2(ImGui::GetContentRegionAvail().x * 5/3, ImGui::GetContentRegionAvail().y * 3/2);
+    ImGui::BeginChild("##TireSubplotsArea", ImGui::GetContentRegionAvail(), false, ImGuiWindowFlags_HorizontalScrollbar);
+    ImPlot::BeginSubplots("##TireSubplots", 3, 5, subplots_area);
+    {
+        for (int i = 0; i < 5; ++i) { // Load
+            for (int j = 0; j < 3; ++j) { // Camber
+                ImPlot::BeginPlot("##subplotij");
+                ImPlot::EndPlot();
+            }
+        }
+    }
+    ImPlot::EndSubplots();
+    ImGui::EndChild();
+}
 inline void LeftPanel(Vehicle &car, UpdateYmd &update_ymd) {
     ImGui::BeginChild("Left Panel", ImVec2(450, ImGui::GetContentRegionAvail().y), true);
     ImGui::BeginTabBar("Right Tabs", ImGuiTabBarFlags_None);
@@ -477,6 +501,7 @@ inline void RightPanel(Vehicle &car, UpdateYmd &update_ymd) {
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Tire Fitter")){
+        SubplotsTireFy(car);
         ImGui::EndTabItem();
     }
     if(ImGui::BeginTabItem("Lap Time Simulation")){
